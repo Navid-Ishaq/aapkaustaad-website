@@ -39,9 +39,9 @@
       <p>👋 Welcome to AL-NOOR.</p>
       <p>Future AI Assistant will answer:</p>
       <ul>
-        <li>Course Fees</li>
+        <li>Course Info</li>
         <li>Class Timing</li>
-        <li>Installments</li>
+        <li>Course Fees</li>
         <li>Online Classes</li>
       </ul>
     </div>
