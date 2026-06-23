@@ -9,7 +9,7 @@ const bubble = document.createElement("div");
 bubble.innerHTML = "Hola";
 
 bubble.style.position = "fixed";
-bubble.style.bottom = "100px";
+bubble.style.bottom = "20px";
 bubble.style.right = "20px";
 
 bubble.style.width = "80px";
