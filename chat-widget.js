@@ -17,7 +17,7 @@ bubble.style.height = "80px";
 
 bubble.style.borderRadius = "50%";
 
-bubble.style.background = "#006400"; // #006400 Dark Green
+bubble.style.background = "#2563eb"; // #006400 Dark Green
 bubble.style.color = "white";
 
 bubble.style.display = "flex";
