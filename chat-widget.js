@@ -1,28 +1,67 @@
 (function () {
 
-  // =========================
-  // CHAT BUBBLE
-  // =========================
+// =========================
+// CHAT BUBBLE
+// =========================
 
-  const bubble = document.createElement("div");
+const bubble = document.createElement("div");
 
-  bubble.innerHTML = "💬";
+bubble.innerHTML = "Hola";
 
-  bubble.style.position = "fixed";
-  bubble.style.bottom = "20px";
-  bubble.style.right = "20px";
-  bubble.style.width = "60px";
-  bubble.style.height = "60px";
-  bubble.style.borderRadius = "50%";
-  bubble.style.background = "#2563eb";
-  bubble.style.color = "white";
-  bubble.style.display = "flex";
-  bubble.style.alignItems = "center";
-  bubble.style.justifyContent = "center";
-  bubble.style.fontSize = "28px";
-  bubble.style.cursor = "pointer";
-  bubble.style.zIndex = "99999";
-  bubble.style.boxShadow = "0 4px 12px rgba(0,0,0,.2)";
+bubble.style.position = "fixed";
+bubble.style.bottom = "20px";
+bubble.style.right = "20px";
+
+bubble.style.width = "80px";
+bubble.style.height = "80px";
+
+bubble.style.borderRadius = "50%";
+
+bubble.style.background = "#006400"; // Dark Green
+bubble.style.color = "white";
+
+bubble.style.display = "flex";
+bubble.style.alignItems = "center";
+bubble.style.justifyContent = "center";
+
+bubble.style.fontSize = "22px";
+bubble.style.fontWeight = "bold";
+bubble.style.fontFamily = "Arial, sans-serif";
+
+bubble.style.cursor = "pointer";
+bubble.style.zIndex = "99999";
+
+bubble.style.boxShadow =
+  "0 4px 15px rgba(0,0,0,.3)";
+
+bubble.style.animation =
+  "holaBlink 1.2s infinite";
+
+// Create animation
+const style = document.createElement("style");
+
+style.innerHTML = `
+@keyframes holaBlink {
+
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.35;
+    transform: scale(1.15);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+}
+`;
+
+document.head.appendChild(style);
 
   // =========================
   // CHAT PANEL
