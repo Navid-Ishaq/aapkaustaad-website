@@ -252,7 +252,7 @@ document.head.appendChild(style);
             border-radius:8px;
           ">
             <b>AL-NOOR:</b><br>
-            ${data.answer}
+            ${makeLinksClickable(data.answer)}
           </div>
         `;
 
