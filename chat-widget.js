@@ -97,3 +97,79 @@ panel.innerHTML = `
   </button>
 </div>
 `;
+
+setTimeout(() => {
+
+const sendBtn = document.getElementById("sendBtn");
+const chatInput = document.getElementById("chatInput");
+const chatMessages = document.getElementById("chatMessages");
+
+sendBtn.onclick = async () => {
+
+    const question = chatInput.value;
+
+    if(!question) return;
+
+    chatMessages.innerHTML += `
+      <div style="margin-top:10px;">
+        <b>You:</b> ${question}
+      </div>
+    `;
+
+    chatInput.value = "";
+
+    try {
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/chat",
+        {
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            message:question
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      chatMessages.innerHTML += `
+        <div style="
+          margin-top:10px;
+          padding:8px;
+          background:#f7f7f7;
+          border-radius:8px;
+        ">
+          <b>AL-NOOR:</b><br>
+          ${data.answer}
+        </div>
+      `;
+
+      chatMessages.scrollTop =
+      chatMessages.scrollHeight;
+
+    } catch(err){
+
+      chatMessages.innerHTML += `
+        <div style="
+          color:red;
+          margin-top:10px;
+        ">
+          Unable to connect to AI server.
+        </div>
+      `;
+    }
+
+};
+
+chatInput.addEventListener("keypress", function(e){
+
+  if(e.key === "Enter"){
+      sendBtn.click();
+  }
+
+});
+
+},500);
