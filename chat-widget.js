@@ -195,10 +195,18 @@ document.head.appendChild(style);
   // CHAT LOGIC
   // =========================
 
-  function makeLinksClickable(text) {
+function makeLinksClickable(text) {
   return text.replace(
-    /(https?:\/\/[^\s]+)/g,
-    '<a href="$1" target="_blank" style="color:#2563eb;font-weight:bold;">Open Link</a>'
+    /(https?:\/\/[^\s<]+)/g,
+    function(url) {
+
+      const cleanUrl = url.replace(/[.,!?;:]+$/, '');
+
+      return `<a href="${cleanUrl}" target="_blank"
+        style="color:#2563eb;font-weight:bold;">
+        ${cleanUrl}
+      </a>`;
+    }
   );
 }
 
