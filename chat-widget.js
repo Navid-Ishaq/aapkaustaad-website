@@ -83,21 +83,7 @@
         <li>Roman Urdu</li>
       </ul>
 
-      📚 Ask about:
-
-      <ul>
-        <li>Course Information</li>
-        <li>Course Fees</li>
-        <li>Class Timings</li>
-        <li>Driving Licence Courses</li>
-        <li>Taxi Courses</li>
-        <li>VTC Courses</li>
-        <li>DELE A2 / B1</li>
-        <li>CCSE Preparation</li>
-        <li>Registration Process</li>
-        <li>Online & Presential Classes</li>
-      </ul>
-
+      📚 Ask About Courses Offered at AL-NOOR:
       💡 Examples:
 
       <ul>
