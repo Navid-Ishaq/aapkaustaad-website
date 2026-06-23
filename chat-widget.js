@@ -76,24 +76,29 @@
 
       🌍 You can ask course questions in:
 
-      <ul>
-        <li>English</li>
-        <li>Español</li>
-        <li>Urdu</li>
-        <li>Roman Urdu</li>
-      </ul>
+     <ul style="display:flex; flex-wrap:wrap; gap:10px 30px;">
+  <li>English</li>
+  <li>Español</li>
+  <li>Urdu</li>
+  <li>Roman Urdu</li>
+  <li>Hindi</li>
+  <li>Punjabi</li>
+  <li>Bengali</li>
+  <li>Nepali</li>
+</ul>
 
-      📚 Ask About Courses Offered at AL-NOOR:
-      💡 Examples:
+📚 Ask About:
 
-      <ul>
-        <li>What is the fee for Taxi Madrid?</li>
-        <li>How can I register?</li>
-        <li>Permiso B course fee?</li>
-        <li>¿Cuál es el precio de DELE A2?</li>
-        <li>CCSE ki fee kitni hai?</li>
-      </ul>
+<ul>
+  <li>Courses</li>
+  <li>Fees</li>
+  <li>Timing</li>
+</ul>
 
+<ul>
+  <li>Registration</li>
+  <li>Course Duration</li>
+</ul>
     </div>
 
   </div>
