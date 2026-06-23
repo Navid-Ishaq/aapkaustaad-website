@@ -195,6 +195,13 @@ document.head.appendChild(style);
   // CHAT LOGIC
   // =========================
 
+  function makeLinksClickable(text) {
+  return text.replace(
+    /(https?:\/\/[^\s]+)/g,
+    '<a href="$1" target="_blank" style="color:#2563eb;font-weight:bold;">Open Link</a>'
+  );
+}
+
   setTimeout(() => {
 
     const sendBtn =
