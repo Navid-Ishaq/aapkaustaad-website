@@ -117,7 +117,7 @@ document.head.appendChild(style);
 
      <ul style="display:flex; flex-wrap:wrap; gap:10px 30px;">
   <li>English</li>
-  <li>Español</li>
+  <li>Spanish</li>
   <li>Urdu</li>
   <li>Roman Urdu</li>
   <li>Hindi</li>
