@@ -126,7 +126,7 @@ document.head.appendChild(style);
   <li>Nepali</li>
 </ul>
 
-📚 Ask About:
+📚 Ask me anything about AL-NOOR Educational Centre.
 
 <ul style="display:flex; flex-wrap:wrap; gap:10px 30px;">
   <li>Courses</li>
