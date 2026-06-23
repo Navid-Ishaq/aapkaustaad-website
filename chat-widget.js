@@ -89,15 +89,15 @@
 
 📚 Ask About:
 
-<ul>
-  <li>Courses</li>
-  <li>Fees</li>
-  <li>Timing</li>
-</ul>
-
-<ul>
-  <li>Registration</li>
-  <li>Course Duration</li>
+<ul style="display:flex; flex-wrap:wrap; gap:10px 30px;">
+  <li>English</li>
+  <li>Español</li>
+  <li>Urdu</li>
+  <li>Roman Urdu</li>
+  <li>Hindi</li>
+  <li>Punjabi</li>
+  <li>Bengali</li>
+  <li>Nepali</li>
 </ul>
     </div>
 
