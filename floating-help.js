@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     #alnoor-help-container{
     position:fixed;
-    top:90px;
+    top:20px;
     left:15px;
 
     z-index:999999;
