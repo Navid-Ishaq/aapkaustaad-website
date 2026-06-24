@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-
     // Create container
     const container = document.createElement("div");
     container.id = "alnoor-help-container";
@@ -8,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Button
     const button = document.createElement("div");
     button.id = "alnoor-help-button";
-    button.innerHTML = "✨ Click Me";
+    button.innerHTML = "✨ Need Help?";
 
     // Message Panel
     const panel = document.createElement("div");
@@ -18,8 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <div class="alnoor-message">
             🤖 For any query, please click the
             <strong>Hola</strong> button available at the
-            bottom-right corner.
-            <br><br>
+            bottom-right corner.<br><br>
             AL-NOOR AI Assistant is ready to help you.
         </div>
     `;
@@ -27,9 +25,8 @@ document.addEventListener("DOMContentLoaded", function () {
     container.appendChild(button);
     container.appendChild(panel);
     document.body.appendChild(container);
-    });
 
-    // Toggle
+    // Toggle panel
     button.addEventListener("click", () => {
         panel.classList.toggle("show");
     });
@@ -37,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // CSS
     const style = document.createElement("style");
     style.innerHTML = `
-
+    
     #alnoor-help-container{
         position:fixed;
         top:90px;
@@ -48,8 +45,6 @@ document.addEventListener("DOMContentLoaded", function () {
         gap:12px;
         font-family:Arial, sans-serif;
     }
-
-    /* BUTTON */
 
     #alnoor-help-button{
         cursor:pointer;
@@ -82,16 +77,10 @@ document.addEventListener("DOMContentLoaded", function () {
         white-space:nowrap;
     }
 
-    /* MESSAGE PANEL */
-
     #alnoor-help-panel{
         max-width:0;
         overflow:hidden;
-
-        transition:
-            max-width .5s ease,
-            padding .5s ease;
-
+        transition:max-width .5s ease,padding .5s ease;
         border-radius:18px;
 
         background:linear-gradient(
@@ -108,7 +97,6 @@ document.addEventListener("DOMContentLoaded", function () {
         color:#003366;
         font-size:16px;
         line-height:1.6;
-
         padding:0;
     }
 
@@ -121,48 +109,35 @@ document.addEventListener("DOMContentLoaded", function () {
         min-width:350px;
     }
 
-    /* Pulse Animation */
-
     @keyframes alnoorPulse{
-
         0%{
             transform:scale(1);
             box-shadow:
-            0 0 10px #ffff66,
-            0 0 20px #00ff99;
+                0 0 10px #ffff66,
+                0 0 20px #00ff99;
         }
 
         50%{
             transform:scale(1.08);
             box-shadow:
-            0 0 20px #ffff66,
-            0 0 40px #00ff99,
-            0 0 60px #00e5ff;
+                0 0 20px #ffff66,
+                0 0 40px #00ff99,
+                0 0 60px #00e5ff;
         }
 
         100%{
             transform:scale(1);
             box-shadow:
-            0 0 10px #ffff66,
-            0 0 20px #00ff99;
+                0 0 10px #ffff66,
+                0 0 20px #00ff99;
         }
     }
-
-    /* Moving Gradient */
 
     @keyframes alnoorGradient{
-        0%{
-            background-position:0% 50%;
-        }
-        50%{
-            background-position:100% 50%;
-        }
-        100%{
-            background-position:0% 50%;
-        }
+        0%{background-position:0% 50%;}
+        50%{background-position:100% 50%;}
+        100%{background-position:0% 50%;}
     }
-
-    /* Mobile */
 
     @media(max-width:768px){
 
@@ -188,6 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     `;
+
     document.head.appendChild(style);
 
-})();
+});
