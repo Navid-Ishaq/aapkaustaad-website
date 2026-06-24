@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
     container.appendChild(button);
     container.appendChild(panel);
     document.body.appendChild(container);
+    });
 
     // Toggle
     button.addEventListener("click", () => {
@@ -190,4 +191,3 @@ document.addEventListener("DOMContentLoaded", function () {
     document.head.appendChild(style);
 
 })();
-});
