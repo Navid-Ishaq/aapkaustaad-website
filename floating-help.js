@@ -36,15 +36,18 @@ document.addEventListener("DOMContentLoaded", function () {
     style.innerHTML = `
     
     #alnoor-help-container{
-        position:fixed;
-        top:90px;
-        left:20px;
-        z-index:999999;
-        display:flex;
-        align-items:center;
-        gap:12px;
-        font-family:Arial, sans-serif;
-    }
+    position:fixed;
+    top:90px;
+    left:15px;
+
+    z-index:999999;
+
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+
+    width:auto;
+}
 
     #alnoor-help-button{
         cursor:pointer;
