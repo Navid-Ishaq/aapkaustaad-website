@@ -1,3 +1,4 @@
+document.addEventListener("DOMContentLoaded", function () {
 (function () {
 
     // Create container
@@ -189,3 +190,4 @@
     document.head.appendChild(style);
 
 })();
+});
