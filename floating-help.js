@@ -151,6 +151,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         #alnoor-help-button{
             font-size:14px;
+            flex-shrink:0 !important;
             padding:10px 16px;
         }
 
