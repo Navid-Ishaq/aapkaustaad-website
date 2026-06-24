@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-(function () {
+
 
     // Create container
     const container = document.createElement("div");
