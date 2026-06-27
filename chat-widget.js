@@ -251,35 +251,39 @@ function makeLinksClickable(text) {
         );
 
         const data = await response.json();
-                const answer = data.answer || "";
-        chatMessages.innerHTML += `
-          <div style="
-            margin-top:10px;
-            padding:8px;
-            background:#f7f7f7;
-            border-radius:8px;
-          ">
-            <b>AL-NOOR:</b><br>
-            ${makeLinksClickable(answer)}  
 
-      if (data.whatsapp) {
+const answer = data.answer || "";
+
+chatMessages.innerHTML += `
+  <div style="
+    margin-top:10px;
+    padding:8px;
+    background:#f7f7f7;
+    border-radius:8px;
+  ">
+    <b>AL-NOOR:</b><br>
+    ${makeLinksClickable(answer)}
+  </div>
+`;
+
+if (data.whatsapp) {
 
   chatMessages.innerHTML += `
-    <div style="margin-top:15px;">
+    <div style="margin-top:12px;">
 
       <a href="${data.whatsapp}"
          target="_blank"
          style="
             display:inline-block;
             background:#25D366;
-            color:#fff;
-            padding:12px 20px;
+            color:white;
+            padding:10px 18px;
             border-radius:8px;
             text-decoration:none;
             font-weight:bold;
         ">
 
-        📱 Send via WhatsApp
+        📱 Send Registration via WhatsApp
 
       </a>
 
