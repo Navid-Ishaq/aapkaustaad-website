@@ -251,7 +251,7 @@ function makeLinksClickable(text) {
         );
 
         const data = await response.json();
-
+                const answer = data.answer || "";
         chatMessages.innerHTML += `
           <div style="
             margin-top:10px;
@@ -260,7 +260,34 @@ function makeLinksClickable(text) {
             border-radius:8px;
           ">
             <b>AL-NOOR:</b><br>
-            ${makeLinksClickable(data.answer)}
+            ${makeLinksClickable(answer)}  
+
+      if (data.whatsapp) {
+
+  chatMessages.innerHTML += `
+    <div style="margin-top:15px;">
+
+      <a href="${data.whatsapp}"
+         target="_blank"
+         style="
+            display:inline-block;
+            background:#25D366;
+            color:#fff;
+            padding:12px 20px;
+            border-radius:8px;
+            text-decoration:none;
+            font-weight:bold;
+        ">
+
+        📱 Send via WhatsApp
+
+      </a>
+
+    </div>
+  `;
+
+}
+            
           </div>
         `;
 
