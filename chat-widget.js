@@ -220,6 +220,7 @@ function makeLinksClickable(text) {
 
     const chatMessages =
       document.getElementById("chatMessages");
+      let chatHistory = [];
 
     sendBtn.onclick = async () => {
 
@@ -245,7 +246,8 @@ function makeLinksClickable(text) {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              message: question
+               message: question,
+               history: chatHistory
             })
           }
         );
@@ -253,6 +255,15 @@ function makeLinksClickable(text) {
         const data = await response.json();
 
 const answer = data.answer || "";
+        chatHistory.push({
+    role: "user",
+    content: question
+});
+
+chatHistory.push({
+    role: "assistant",
+    content: answer
+});
 
 chatMessages.innerHTML += `
   <div style="
