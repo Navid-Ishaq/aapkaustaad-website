@@ -247,6 +247,7 @@ function makeLinksClickable(text) {
             },
             body: JSON.stringify({
                message: question,
+               domain: window.location.origin,
                history: chatHistory
             })
           }
