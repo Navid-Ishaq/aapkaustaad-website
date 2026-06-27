@@ -292,8 +292,7 @@ if (data.whatsapp) {
 
 }
             
-          </div>
-        `;
+      
 
       } catch (err) {
 
