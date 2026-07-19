@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const current=(location.pathname.split('/').pop()||'index.html').toLowerCase();
   document.body.classList.add(`page-${current.replace('.html','').replace(/[^a-z0-9-]/g,'')}`);
   document.querySelector('.detleng-nav')?.setAttribute('aria-label','Primary navigation');
+  document.querySelectorAll('h1,h2').forEach(heading=>{
+    heading.childNodes.forEach(node=>{if(node.nodeType===Node.TEXT_NODE)node.textContent=node.textContent.replace(/^[^A-Za-zÀ-ÿÀ-ž\u0600-\u06ff0-9]+/u,'')});
+  });
   document.querySelectorAll('.menu-links a').forEach(link=>{if((link.getAttribute('href')||'').split('#')[0].toLowerCase()===current)link.setAttribute('aria-current','page')});
   const toggle=document.getElementById('menu-toggle'),menu=document.querySelector('.menu-links'),label=document.querySelector('label[for="menu-toggle"]');
   if(toggle&&menu&&label){label.setAttribute('role','button');label.setAttribute('tabindex','0');label.setAttribute('aria-controls','primary-navigation');label.setAttribute('aria-expanded','false');menu.id='primary-navigation';toggle.addEventListener('change',()=>label.setAttribute('aria-expanded',String(toggle.checked)));label.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle.click()}});menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{toggle.checked=false;label.setAttribute('aria-expanded','false')}))}
@@ -19,7 +22,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(/#fff[0-9a-f]{3}|#fef|#fffa|gold|yellow/.test(style))el.classList.add('section-warm');
     });
     const heroHeading=content.querySelector('h1')||content.querySelector('h2');
-    if(heroHeading){let hero=heroHeading.closest('div,section');if(hero&&content.contains(hero)){while(hero.parentElement!==content&&hero.parentElement?.closest('.detleng-content'))hero=hero.parentElement;hero.classList.add('content-panel','page-hero','section-dark')}}
+    if(heroHeading){let hero=heroHeading.closest('header,div,section');if(hero&&hero!==content&&content.contains(hero)){while(hero.parentElement!==content&&hero.parentElement?.closest('.detleng-content'))hero=hero.parentElement;hero.classList.add('content-panel','page-hero','section-dark')}}
     const cta=[...content.children].find(el=>el.matches('div')&&el.querySelector(':scope > a[href^="mailto:"]')&&el.textContent.includes('Get Started'));
     if(cta)cta.classList.add('page-cta');
   }
