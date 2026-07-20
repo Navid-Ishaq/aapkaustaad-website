@@ -9,12 +9,13 @@ Website:
 https://www.aapkaustaad.com
 
 
-Nuestra comunidad continúa creciendo gracias al trabajo constante de nuestros estudiantes. Cada éxito inspira a otros a comenzar su propio camino hacia nuevas oportunidades en España.
-
+Our community continues to grow through the dedication and hard work of our students. Every success story inspires others to begin their own journey towards new opportunities in Spain.
 
 <img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/842ccd14-987f-47cf-92a4-05d213b70630" />
 
-Los resultados de Taxi, VTC, DELE y otros programas muestran que la preparación adecuada y el apoyo educativo pueden transformar objetivos en logros reales.
+
+
+The success achieved in Driving Theory, Taxi, VTC, DELE A2, and other educational programmes demonstrates how quality preparation and continuous educational support can turn goals into real achievements.
 
 <img width="1692" height="930" alt="image" src="https://github.com/user-attachments/assets/036456d8-96e5-4f1e-87b2-2db67ecb2011" />
 
