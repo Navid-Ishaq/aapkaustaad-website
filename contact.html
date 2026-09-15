@@ -66,6 +66,11 @@
     .contact-card .number{display:block;margin-top:7px;color:var(--ink);font-size:16px;font-weight:800;letter-spacing:.02em}
     .card-link{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;margin-top:auto;color:var(--green);font-weight:800;text-decoration:none}
     .card-link:hover{text-decoration:underline;text-underline-offset:4px}
+    .whatsapp-cta{position:relative;overflow:hidden;width:max-content;max-width:100%;padding:12px 18px;border-radius:12px;background:linear-gradient(135deg,#148c4b,#20b963);color:#fff;box-shadow:0 10px 24px rgba(20,140,75,.22);transition:transform .2s,box-shadow .2s}
+    .whatsapp-cta:before{content:"";position:absolute;inset:0;transform:translateX(-130%);background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.42) 50%,transparent 65%);animation:soft-shine 3.8s ease-in-out infinite}
+    .whatsapp-cta:hover{color:#fff;text-decoration:none;transform:translateY(-2px);box-shadow:0 14px 30px rgba(20,140,75,.3)}
+    .whatsapp-cta span{position:relative;z-index:1}
+    @keyframes soft-shine{0%,58%{transform:translateX(-130%)}85%,100%{transform:translateX(130%)}}
     .content-section{margin-top:72px}
     .section-head{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:26px}
     .section-head h2{margin:0;font-size:clamp(30px,4vw,44px);letter-spacing:-.045em;line-height:1.1}
@@ -86,13 +91,10 @@
     .visit-banner h3{margin:0 0 6px;font-size:24px}
     .visit-banner p{margin:0;color:#bdd5cc}
     .footer{padding:30px 24px 100px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:13px}
-    .whatsapp-float{position:fixed;right:20px;bottom:20px;z-index:40;display:flex;align-items:center;gap:10px;padding:13px 17px;border-radius:999px;background:#1fa855;color:#fff;text-decoration:none;font-size:14px;font-weight:800;box-shadow:0 15px 32px rgba(16,118,60,.28)}
-    .whatsapp-float:hover{transform:translateY(-2px)}
-    .whatsapp-float svg{width:22px;height:22px;fill:currentColor}
     :focus-visible{outline:3px solid #efb73f;outline-offset:3px}
     @media(max-width:800px){.nav-wrap{height:68px}.brand img{width:128px}.menu-button{display:block}.nav-links{display:none;position:absolute;left:16px;right:16px;top:67px;padding:12px;flex-direction:column;align-items:stretch;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow)}.nav-links a{padding:12px}.menu-toggle:checked~.nav-links{display:flex}.hero-inner{grid-template-columns:1fr;padding-top:54px;padding-bottom:92px}.hero-note{display:none}.contact-grid{grid-template-columns:1fr}.contact-card.featured{grid-column:span 1}.section-head{display:block}.section-head p{margin-top:12px}.support-list{grid-template-columns:1fr 1fr}.visit-banner{grid-template-columns:1fr}.visit-banner .btn{width:100%}}
-    @media(max-width:520px){.nav-wrap,main,.hero-inner{padding-left:16px;padding-right:16px}h1{font-size:42px}.hero-copy{font-size:16px}.hero-actions .btn{width:100%}.contact-card{padding:22px;min-height:230px}.support-list{grid-template-columns:1fr}.language-panel{border-radius:18px}.whatsapp-float{right:12px;bottom:12px}.whatsapp-float span{display:none}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+    @media(max-width:520px){.nav-wrap,main,.hero-inner{padding-left:16px;padding-right:16px}h1{font-size:42px}.hero-copy{font-size:16px}.hero-actions .btn{width:100%}.contact-card{padding:22px;min-height:230px}.support-list{grid-template-columns:1fr}.language-panel{border-radius:18px}.whatsapp-cta{width:100%}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
   </style>
 </head>
 <body>
@@ -135,13 +137,13 @@
       <article class="contact-card featured">
         <div class="card-top"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.22-.08-.39-.13-.55.13-.16.24-.63.81-.77.97-.14.16-.28.18-.53.06-.24-.12-1.02-.38-1.95-1.2a7.3 7.3 0 0 1-1.35-1.68c-.14-.24-.01-.38.11-.5.11-.11.24-.28.36-.42.12-.14.16-.24.24-.41.08-.16.04-.3-.02-.42-.06-.12-.55-1.33-.75-1.82-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.43.06-.65.3-.22.25-.85.83-.85 2.02s.87 2.34.99 2.5c.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.47-.6 1.67-1.18.2-.59.2-1.09.14-1.19-.06-.1-.22-.16-.47-.28M12.04 21.5h-.01a9.47 9.47 0 0 1-4.83-1.32l-.35-.2-3.59.94.96-3.5-.23-.36a9.45 9.45 0 1 1 8.05 4.44m8.06-17.55A11.32 11.32 0 0 0 12.05.62 11.2 11.2 0 0 0 2.3 17.39L.7 23.25l6-1.57A11.22 11.22 0 0 0 12.04 23h.01A11.22 11.22 0 0 0 20.1 3.95"/></svg></span><span class="tag">Recommended</span></div>
         <h2>Teacher Bilal Anjum</h2>
-        <p>Course information and academic guidance <span class="number">WhatsApp Number: +34 674 169 439</span></p>
-        <a class="card-link" href="https://wa.me/34674169439?text=Hello%20AL-NOOR,%20My%20name%20is%20........%20I%20want%20information%20about%20your%20courses." target="_blank" rel="noopener" aria-label="Chat with Teacher Bilal Anjum on WhatsApp">Chat on WhatsApp →</a>
+        <p>Course information and friendly academic guidance from the AL-NOOR team.</p>
+        <a class="card-link whatsapp-cta" href="https://wa.me/34674169439?text=Hello%20AL-NOOR,%20My%20name%20is%20........%20I%20want%20information%20about%20your%20courses." target="_blank" rel="noopener" aria-label="Start a WhatsApp conversation with Teacher Bilal Anjum"><span>Start conversation on WhatsApp →</span></a>
       </article>
       <article class="contact-card">
         <div class="card-top"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.22-.08-.39-.13-.55.13-.16.24-.63.81-.77.97-.14.16-.28.18-.53.06-.24-.12-1.02-.38-1.95-1.2a7.3 7.3 0 0 1-1.35-1.68c-.14-.24-.01-.38.11-.5.11-.11.24-.28.36-.42.12-.14.16-.24.24-.41.08-.16.04-.3-.02-.42-.06-.12-.55-1.33-.75-1.82-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.43.06-.65.3-.22.25-.85.83-.85 2.02s.87 2.34.99 2.5c.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.47-.6 1.67-1.18.2-.59.2-1.09.14-1.19-.06-.1-.22-.16-.47-.28M12.04 21.5h-.01a9.47 9.47 0 0 1-4.83-1.32l-.35-.2-3.59.94.96-3.5-.23-.36a9.45 9.45 0 1 1 8.05 4.44m8.06-17.55A11.32 11.32 0 0 0 12.05.62 11.2 11.2 0 0 0 2.3 17.39L.7 23.25l6-1.57A11.22 11.22 0 0 0 12.04 23h.01A11.22 11.22 0 0 0 20.1 3.95"/></svg></span></div>
-        <h2>WhatsApp Support</h2><p>General enquiries with Naveed <span class="number">+34 663 430 258</span></p>
-        <a class="card-link" href="https://wa.me/34663430258?text=Hello%20AL-NOOR,%20My%20name%20is%20........%20I%20want%20information%20about%20your%20courses." target="_blank" rel="noopener">Start a conversation →</a>
+        <h2>WhatsApp Support</h2><p>Quick help for general enquiries with Naveed.</p>
+        <a class="card-link whatsapp-cta" href="https://wa.me/34663430258?text=Hello%20AL-NOOR,%20My%20name%20is%20........%20I%20want%20information%20about%20your%20courses." target="_blank" rel="noopener"><span>Start conversation on WhatsApp →</span></a>
       </article>
       <article class="contact-card">
         <div class="card-top"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V6c0-1.1-.9-2-2-2m0 4-8 5-8-5V6l8 5 8-5z"/></svg></span></div>
@@ -177,12 +179,13 @@
   </main>
 
   <footer class="footer">© <span id="year"></span> AL-NOOR Centre Educatiu Asiàtic · Barcelona, Spain</footer>
-  <a class="whatsapp-float" href="https://wa.me/34674169439?text=Hello%20AL-NOOR,%20My%20name%20is%20........%20I%20want%20information%20about%20your%20courses." target="_blank" rel="noopener" aria-label="Chat with Teacher Bilal Anjum on WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.75 13.96c-.25-.13-1.47-.73-1.7-.81-.22-.08-.39-.13-.55.13-.16.24-.63.81-.77.97-.14.16-.28.18-.53.06-.24-.12-1.02-.38-1.95-1.2a7.3 7.3 0 0 1-1.35-1.68c-.14-.24-.01-.38.11-.5.11-.11.24-.28.36-.42.12-.14.16-.24.24-.41.08-.16.04-.3-.02-.42-.06-.12-.55-1.33-.75-1.82-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.43.06-.65.3-.22.25-.85.83-.85 2.02s.87 2.34.99 2.5c.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.47-.6 1.67-1.18.2-.59.2-1.09.14-1.19-.06-.1-.22-.16-.47-.28M12.04 21.5h-.01a9.47 9.47 0 0 1-4.83-1.32l-.35-.2-3.59.94.96-3.5-.23-.36a9.45 9.45 0 1 1 8.05 4.44m8.06-17.55A11.32 11.32 0 0 0 12.05.62 11.2 11.2 0 0 0 2.3 17.39L.7 23.25l6-1.57A11.22 11.22 0 0 0 12.04 23h.01A11.22 11.22 0 0 0 20.1 3.95"/></svg><span>WhatsApp us</span></a>
   <script>
     const tabs=[...document.querySelectorAll('[role="tab"]')];
     tabs.forEach((tab,index)=>tab.addEventListener('click',()=>{tabs.forEach(t=>{const active=t===tab;t.setAttribute('aria-selected',active);document.getElementById(t.getAttribute('aria-controls')).hidden=!active});tab.focus()}));
     document.getElementById('year').textContent=new Date().getFullYear();
     document.querySelectorAll('.nav-links a').forEach(link=>link.addEventListener('click',()=>document.getElementById('menu-toggle').checked=false));
   </script>
+  <!-- Restored AL-NOOR Hola AI student support chatbot -->
+  <script src="/chat-widget.js"></script>
 </body>
 </html>
