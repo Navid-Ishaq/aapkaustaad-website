@@ -189,3 +189,8 @@ label { color: var(--ink); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+
+
+/* AL-NOOR enquiry menu tab */
+.menu-links a.inquiry-nav-link { background:#1859a9 !important;color:#fff !important;border-radius:9px; }
+.menu-links a.inquiry-nav-link:hover { background:#10447f !important;color:#fff !important; }

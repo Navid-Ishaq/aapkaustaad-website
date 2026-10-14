@@ -1,0 +1,33 @@
+/* Isolated styles for the new form only. Existing AL-NOOR pages remain untouched. */
+.menu-links a.inquiry-nav-link { background:#1859a9 !important; color:#fff !important; border-radius:9px; }
+.menu-links a.inquiry-nav-link:hover, .menu-links a.inquiry-nav-link[aria-current="page"] { background:#10447f !important; color:#fff !important; }
+.enquiry-page { background: linear-gradient(155deg,#f4f8fd,#fff 65%); min-height:calc(100vh - 90px); padding:42px 22px 75px; color:#172033; }
+.enquiry-intro, .enquiry-card, .enquiry-bottom { max-width:900px; margin-inline:auto; }
+.enquiry-eyebrow { letter-spacing:.18em; text-transform:uppercase; font-size:12px; font-weight:800; color:#1765a7; }
+.enquiry-intro h1 { font-size:clamp(2.1rem,5vw,3.5rem) !important; margin:14px 0 20px !important; line-height:1.1 !important; }
+.enquiry-intro p { font-size:18px; max-width:760px; color:#4d5971; line-height:1.7; }
+.enquiry-chips { display:flex; flex-wrap:wrap; gap:9px; margin:22px 0 30px; }
+.enquiry-chips span { background:#e7f0fa; color:#28516f; border:1px solid #d3e3f3; font-size:12px; border-radius:40px; padding:7px 12px; font-weight:700; }
+.enquiry-card { background:#fff; border:1px solid #dfe5ed; box-shadow:0 20px 55px rgba(20,53,82,.07); border-radius:22px; padding:clamp(24px,5vw,43px); }
+.enquiry-card-heading h2 { margin:0 0 6px !important; font-size:28px !important; }
+.enquiry-card-heading p { font-size:14px; color:#69758c; margin-bottom:22px; }
+.enquiry-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.enquiry-field { margin-bottom:20px; }
+.enquiry-field label { display:block; color:#172033; font-size:14px; font-weight:750; margin-bottom:7px; }
+.enquiry-field input:not([type="checkbox"]), .enquiry-field select, .enquiry-field textarea { width:100%; border:1px solid #bac9d9; border-radius:11px; padding:13px 14px; background:#fff; font-size:15px; min-height:48px; }
+.enquiry-field textarea { min-height:145px; resize:vertical; }
+.enquiry-field input:focus, .enquiry-field select:focus, .enquiry-field textarea:focus { border-color:#1859a9; outline:3px solid rgba(24,89,169,.13); }
+.enquiry-help { font-size:12px; color:#69758c; margin-top:6px; }
+.enquiry-consent label { display:flex; gap:12px; align-items:flex-start; font-weight:500; line-height:1.6; }
+.enquiry-consent input[type="checkbox"] { width:18px; height:18px; flex:none; margin-top:3px; }
+.enquiry-actions { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+.enquiry-actions button { border:0; border-radius:11px; background:#1859a9; color:#fff; padding:14px 23px; min-height:50px; font-size:16px; font-weight:750; cursor:pointer; }
+.enquiry-actions button:hover { background:#10447f; }
+.enquiry-actions button:disabled { opacity:.6; cursor:wait; }
+.enquiry-actions p, .enquiry-status { font-size:13px; color:#637187; margin:0; }
+.enquiry-status { margin-top:14px; min-height:24px; }
+.enquiry-status.success { color:#176c43; font-weight:750; }
+.enquiry-status.error { color:#a32727; font-weight:750; }
+.enquiry-bottom { margin-top:25px; font-size:15px; color:#637187; text-align:center; }
+.hidden-field { display:none !important; }
+@media(max-width:650px) { .enquiry-page { padding:27px 14px 50px; } .enquiry-card{padding:24px 18px;} .enquiry-grid {grid-template-columns:1fr; gap:0;} .enquiry-chips{margin-top:12px;} }

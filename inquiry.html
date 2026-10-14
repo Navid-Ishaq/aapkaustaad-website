@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ask AL-NOOR Asian Educational Centre about courses, schedules, fees and enrolment.">
+  <title>Course Enquiry | AL-NOOR Asian Educational Centre</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="alnoor.css">
+  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="inquiry.css">
+</head>
+<body>
+<div class="site-spacer" aria-hidden="true"></div>
+<nav class="detleng-nav" aria-label="Main navigation">
+  <div class="detleng-logo"><a href="index.html" aria-label="AL-NOOR home"><img src="logo.png" alt="AL-NOOR Asian Educational Centre" width="348" height="116"></a></div>
+  <input type="checkbox" id="menu-toggle">
+  <label for="menu-toggle" class="menu-icon" tabindex="0" aria-label="Toggle navigation">☰ MENU</label>
+  <div class="menu-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="courses.html">Courses</a>
+    <a href="success.html">Success</a>
+    <a href="policies.html">Policies</a>
+    <a href="contact.html">Contact</a>
+    <a href="inquiry.html" class="inquiry-nav-link" aria-current="page">Enquire</a>
+  </div>
+</nav>
+<main class="enquiry-page" id="main">
+  <div class="enquiry-intro">
+    <div class="enquiry-eyebrow">AL-NOOR · Course Information</div>
+    <h1>Ask us about a course.</h1>
+    <p>Want to know about course fees, dates, languages or enrolment? Share your question below. Our team will review your enquiry and contact you soon.</p>
+    <div class="enquiry-chips"><span>English · Español · اردو</span><span>For students in Spain and beyond</span><span>No email app required</span></div>
+  </div>
+  <section class="enquiry-card" aria-labelledby="form-heading">
+    <div class="enquiry-card-heading"><h2 id="form-heading">Course Enquiry</h2><p>Fields marked * are required.</p></div>
+    <form id="alnoorInquiryForm" novalidate>
+      <div class="enquiry-grid">
+        <div class="enquiry-field"><label for="studentName">Full name *</label><input id="studentName" name="name" autocomplete="name" maxlength="110" required placeholder="Your full name"></div>
+        <div class="enquiry-field"><label for="studentEmail">Email address *</label><input id="studentEmail" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="you@example.com"></div>
+        <div class="enquiry-field"><label for="countryCode">WhatsApp country code *</label><input id="countryCode" name="countryCode" type="tel" autocomplete="off" inputmode="tel" maxlength="5" pattern="\+[1-9][0-9]{0,3}" required value="+34" placeholder="+34"><div class="enquiry-help">Examples: Spain +34 · Ireland +353 · Pakistan +92</div></div>
+        <div class="enquiry-field"><label for="whatsappNumber">WhatsApp mobile number *</label><input id="whatsappNumber" name="whatsappNumber" type="tel" autocomplete="tel-national" inputmode="tel" maxlength="25" required placeholder="612 345 678"><div class="enquiry-help">Without country code; include only your actual WhatsApp number.</div></div>
+        <div class="enquiry-field"><label for="studentCity">City / Country (optional)</label><input id="studentCity" name="city" maxlength="100" placeholder="Barcelona, Spain"></div>
+        <div class="enquiry-field"><label for="preferredLanguage">Preferred language</label><select id="preferredLanguage" name="language"><option value="English">English</option><option value="Español">Español</option><option value="Urdu">اردو (Urdu)</option><option value="Other">Other</option></select></div>
+      </div>
+      <div class="enquiry-field"><label for="courseInterest">Which course are you interested in? *</label><select id="courseInterest" name="course" required>
+        <option value="">Select a course</option>
+        <optgroup label="Taxi &amp; VTC"><option>Dublin Taxi</option><option>Taxi Barcelona</option><option>Taxi Madrid</option><option>Taxi Valencia</option><option>VTC Madrid</option></optgroup>
+        <optgroup label="Driving licences"><option>Permiso AM</option><option>Permiso A1 / A2</option><option>Permiso B</option><option>Permiso C</option><option>Permiso D</option></optgroup>
+        <optgroup label="Exams &amp; languages"><option>DELE A2</option><option>DELE B1</option><option>CCSE</option><option>Spanish Language</option><option>English Language</option></optgroup>
+        <option>Other course / General enquiry</option>
+      </select></div>
+      <div class="enquiry-field"><label for="question">What would you like to know? *</label><textarea id="question" name="question" minlength="10" maxlength="3000" rows="5" required placeholder="I would like to know the fees, schedule, duration and registration process..."></textarea></div>
+      <div class="enquiry-field enquiry-consent"><label><input type="checkbox" id="contactConsent" name="consent" required> <span>I agree to AL-NOOR using my submitted information to respond to this course enquiry by email or WhatsApp. See our <a href="policies.html">policies</a>. *</span></label></div>
+      <div class="hidden-field" aria-hidden="true"><label for="companyWebsite">Leave blank</label><input type="text" id="companyWebsite" name="companyWebsite" tabindex="-1" autocomplete="off"></div>
+      <div class="enquiry-actions"><button type="submit" id="enquirySubmit">Send My Enquiry →</button><p>Your own email application will not open.</p></div>
+      <p class="enquiry-status" id="enquiryStatus" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+  <div class="enquiry-bottom">Prefer to speak with our team? Visit our <a href="contact.html">Contact page</a> for WhatsApp details.</div>
+</main>
+<script src="inquiry-config.js"></script>
+<script src="inquiry.js" defer></script>
+<!-- Leave existing AI chat widget unchanged; it is separate from this form. -->
+<script src="/chat-widget.js" defer></script>
+</body>
+</html>
