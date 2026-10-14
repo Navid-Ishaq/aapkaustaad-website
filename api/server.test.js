@@ -6,6 +6,14 @@ const env={RESEND_API_KEY:'fake-secret',ALNOOR_FROM_EMAIL:'AL-NOOR <notification
 test('valid student enquiry',()=>assert.equal(validate(fields).email,fields.email));
 test('requires consent and WhatsApp country code',()=>{assert.throws(()=>validate({...fields,consent:false}));assert.throws(()=>validate({...fields,countryCode:'34'}));});
 test('escapes submitted HTML in both email templates',()=>{const emails=buildEmails({...fields,question:'<script>alert(1)</script>'},env,'AN-123');assert.equal(emails.length,2);assert.ok(!emails[0].html.includes('<script>'));assert.match(emails[1].html,/&lt;script&gt;/);assert.equal(emails[0].reply_to,'info@aapkaustaad.com');assert.equal(emails[1].reply_to,'student@example.com');});
+test('admin notification CCs teacher; student confirmation remains private',()=>{
+  const [student,admin]=buildEmails(fields,env,'AN-123');
+  assert.equal(student.cc,undefined);
+  assert.deepEqual(admin.to,['info@aapkaustaad.com']);
+  assert.deepEqual(admin.cc,['talk2bilal77@gmail.com']);
+  const custom=buildEmails(fields,{...env,ALNOOR_CC_EMAIL:'another.teacher@example.com'},'AN-123');
+  assert.deepEqual(custom[1].cc,['another.teacher@example.com']);
+});
 test('batch sends two emails with stable idempotency',async()=>{let called=0;const mock=async(url,opt)=>{called++;assert.equal(url,'https://api.resend.com/emails/batch');assert.equal(JSON.parse(opt.body).length,2);assert.equal(opt.headers['Idempotency-Key'],'alnoor-enquiry/abc');return {ok:true,status:200,json:async()=>({data:[{id:'id1'},{id:'id2'}]})}};const ids=await sendBatch(buildEmails(fields,env,'AN-123'),'fake-key','alnoor-enquiry/abc',mock);assert.deepEqual(ids,['id1','id2']);assert.equal(called,1)});
 test('batch retries HTTP 429 once',async()=>{let called=0;const mock=async()=>{called++;return called===1?{ok:false,status:429,json:async()=>({})}:{ok:true,status:200,json:async()=>({data:[{id:'a'},{id:'b'}]})}};assert.deepEqual(await sendBatch([], 'key','retry-id',mock),['a','b']);assert.equal(called,2)});
 test('CORS blocks another website',async()=>{const server=createApp(env,async()=>{throw Error('should not send')});await new Promise(r=>server.listen(0,'127.0.0.1',r));try{const r=await fetch(`http://127.0.0.1:${server.address().port}/api/inquiry`,{method:'POST',headers:{Origin:'https://evil.example','Content-Type':'application/json'},body:JSON.stringify(fields)});assert.equal(r.status,403);}finally{await new Promise(r=>server.close(r))}});

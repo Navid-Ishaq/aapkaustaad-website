@@ -49,7 +49,7 @@ export function buildEmails(fields, env, reference) {
     `<p>A student submitted the course enquiry form.</p><table style="width:100%;border-collapse:collapse;font-size:14px">${section('Name',fields.name)}${section('Email',fields.email)}${section('WhatsApp',wa)}${section('City / country',fields.city)}${section('Preferred language',fields.language)}${section('Course',fields.course)}${section('Question',fields.question)}</table><p>You can reply to this notification to contact the student by email.</p>`,reference);
   return [
     {from,to:[fields.email],reply_to:replyTo,subject:`We received your AL-NOOR course enquiry — ${reference}`,html:clientHtml},
-    {from,to:[toAdmin],reply_to:fields.email,subject:`New AL-NOOR course enquiry — ${reference}`,html:adminHtml}
+    {from,to:[toAdmin],cc:[env.ALNOOR_CC_EMAIL || 'talk2bilal77@gmail.com'],reply_to:fields.email,subject:`New AL-NOOR course enquiry — ${reference}`,html:adminHtml}
   ];
 }
 

@@ -31,3 +31,17 @@
 .enquiry-bottom { margin-top:25px; font-size:15px; color:#637187; text-align:center; }
 .hidden-field { display:none !important; }
 @media(max-width:650px) { .enquiry-page { padding:27px 14px 50px; } .enquiry-card{padding:24px 18px;} .enquiry-grid {grid-template-columns:1fr; gap:0;} .enquiry-chips{margin-top:12px;} }
+/* AL-NOOR inquiry success popup: scoped to the enquiry page only. */
+.enquiry-success-dialog { position:fixed; inset:0; margin:auto; box-sizing:border-box; width:min(92vw,500px); max-height:90vh; padding:0; overflow:auto; border:0; border-radius:20px; box-shadow:0 24px 70px rgba(11,30,57,.28); color:#172033; background:#fff; }
+.enquiry-success-dialog::backdrop { background:rgba(12,29,51,.67); }
+.enquiry-success-dialog .enquiry-success-content { position:relative; padding:35px 28px 28px; text-align:center; font-family:Inter,Arial,sans-serif; }
+.enquiry-success-dialog .enquiry-success-close { position:absolute; top:12px; right:14px; border:0; background:transparent; color:#65758a; font-size:29px; cursor:pointer; line-height:1; padding:6px 10px; }
+.enquiry-success-dialog .enquiry-success-check { display:grid; place-items:center; width:68px; height:68px; margin:0 auto 17px; background:#e0f6e8; color:#16824b; border-radius:50%; font-size:39px; font-weight:800; }
+.enquiry-success-dialog h2 { color:#133456 !important; font-size:25px !important; line-height:1.25 !important; margin:0 0 14px !important; }
+.enquiry-success-dialog p { color:#47566b; font-size:15px; line-height:1.65; margin:12px 0; }
+.enquiry-success-dialog .enquiry-success-reference { background:#f1f6fc; padding:10px 8px; border-radius:8px; overflow-wrap:anywhere; }
+.enquiry-success-dialog .enquiry-success-note { font-size:13px; }
+.enquiry-success-dialog .enquiry-success-done { margin-top:10px; border:0; border-radius:10px; background:#1859a9; color:#fff; padding:13px 40px; font-size:16px; font-weight:700; cursor:pointer; }
+.enquiry-success-dialog .enquiry-success-done:hover { background:#10447f; }
+.enquiry-success-dialog button:focus-visible { outline:3px solid #62a9ef; outline-offset:3px; }
+@media(max-width:480px) { .enquiry-success-dialog .enquiry-success-content {padding:30px 18px 24px;} .enquiry-success-dialog h2 {font-size:22px !important;} }

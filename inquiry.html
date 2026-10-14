@@ -63,6 +63,18 @@
   </section>
   <div class="enquiry-bottom">Prefer to speak with our team? Visit our <a href="contact.html">Contact page</a> for WhatsApp details.</div>
 </main>
+<!-- Native modal: shown only when the backend confirms both emails were accepted. -->
+<dialog id="enquirySuccessDialog" class="enquiry-success-dialog" aria-labelledby="enquirySuccessTitle" aria-describedby="enquirySuccessDescription">
+  <div class="enquiry-success-content">
+    <button type="button" class="enquiry-success-close" id="enquiryCloseDialog" aria-label="Close confirmation">&times;</button>
+    <div class="enquiry-success-check" aria-hidden="true">&#10003;</div>
+    <h2 id="enquirySuccessTitle">Enquiry sent successfully!</h2>
+    <p id="enquirySuccessDescription">Thank you for contacting AL-NOOR Asian Educational Centre. We have received your course enquiry.</p>
+    <p class="enquiry-success-reference">Your reference: <strong id="enquirySuccessReference"></strong></p>
+    <p class="enquiry-success-note">We have emailed your confirmation. Please also check your Spam/Junk folder.</p>
+    <button type="button" class="enquiry-success-done" id="enquiryDialogDone">Done</button>
+  </div>
+</dialog>
 <script src="inquiry-config.js"></script>
 <script src="inquiry.js" defer></script>
 <!-- Leave existing AI chat widget unchanged; it is separate from this form. -->

@@ -9,6 +9,25 @@
   const requestedCourse = new URLSearchParams(location.search).get('course');
   if (requestedCourse && allowed.has(requestedCourse)) courseInput.value = requestedCourse;
 
+  const successDialog = document.getElementById('enquirySuccessDialog');
+  const successReference = document.getElementById('enquirySuccessReference');
+  function closeSuccessDialog() {
+    if (successDialog && successDialog.open) successDialog.close();
+  }
+  document.getElementById('enquiryCloseDialog')?.addEventListener('click', closeSuccessDialog);
+  document.getElementById('enquiryDialogDone')?.addEventListener('click', closeSuccessDialog);
+  successDialog?.addEventListener('click', event => {
+    if (event.target === successDialog) closeSuccessDialog();
+  });
+  function showSuccess(reference) {
+    if (successDialog && typeof successDialog.showModal === 'function') {
+      successReference.textContent = reference;
+      successDialog.showModal();
+    } else {
+      setStatus('Thank you! We received your enquiry (reference: ' + reference + '). Please check your email.', 'success');
+    }
+  }
+
   function setStatus(message, className) {
     status.className = 'enquiry-status ' + (className || '');
     status.textContent = message;
@@ -50,12 +69,12 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.ok) throw new Error(data.error || 'We could not submit your enquiry right now.');
-      setStatus('Thank you! We received your enquiry (reference: ' + data.reference + '). Please also check your Spam/Junk folder for our confirmation email.', 'success');
+      setStatus('', '');
       form.reset();
       pendingSubmissionId = null;
       lastPayloadFingerprint = '';
       courseInput.value = requestedCourse && allowed.has(requestedCourse) ? requestedCourse : '';
-      window.scrollTo({top:Math.max(0, status.getBoundingClientRect().top + window.scrollY - 200),behavior:'smooth'});
+      showSuccess(data.reference);
     } catch (error) {
       setStatus(error.message || 'Unable to connect. Please try again or contact us via WhatsApp.', 'error');
     } finally { button.disabled = false; }
