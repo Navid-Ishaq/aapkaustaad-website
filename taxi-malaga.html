@@ -25,6 +25,12 @@
 @media(max-width:560px){.malaga-language-inner{gap:8px}.malaga-language-copy{text-align:center;width:100%}.malaga-language-link{min-width:85px;padding:7px 12px}}
 @media print{.malaga-language-strip{display:none}}
 </style>
+<style id="malaga-chatbot-contrast-fix">
+/* Local-only compatibility fix for the existing shared chat-widget.js.
+   The Málaga dark page otherwise gives the widget white inherited text on white panels. */
+#chatMessages { color: #172033; }
+#chatMessages input, #chatInput { color: #172033; background-color: #fff; }
+</style>
 </head>
 <body>
 <div class="site-spacer" aria-hidden="true"></div>
