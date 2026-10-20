@@ -20,6 +20,14 @@ Deno.serve(async req=>{
   return p;
  }
  switch(b.action){
+ case 'preview-delete-class':
+ case 'delete-class':{
+  requireValue(isOwner,'Only the owner can delete a class');requireValue(uuid(b.class_id),'Invalid class');
+  if(b.action==='preview-delete-class')return reply({data:checked(await admin.rpc('chat_class_delete_preview',{p_actor:user.id,p_class:b.class_id}))});
+  requireValue(b.confirmation==='DELETE'&&typeof b.confirm_name==='string'&&Number.isSafeInteger(b.expected_count)&&b.expected_count>=0&&Number.isSafeInteger(b.expected_members)&&b.expected_members>=0&&Number.isSafeInteger(b.expected_revision)&&b.expected_revision>=0,'Preview and confirm class deletion first');
+  const deleted=checked(await admin.rpc('chat_class_delete_execute',{p_actor:user.id,p_class:b.class_id,p_name:b.confirm_name,p_count:b.expected_count,p_members:b.expected_members,p_revision:b.expected_revision}));
+  return reply({data:{...deleted as object,storage_cleanup_pending:!await collectMedia(admin)}});
+ }
  case 'media-settings':{
   requireValue(uuid(b.class_id)&&['teacher_voice','student_voice','image_upload'].includes(b.setting)&&typeof b.enabled==='boolean','Invalid media setting');
   checked(await admin.from('chat_classes').update({[b.setting]:b.enabled}).eq('id',b.class_id).select('id').single());target=b.class_id+':'+b.setting;break;
