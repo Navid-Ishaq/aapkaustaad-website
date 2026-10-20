@@ -1,5 +1,7 @@
 # aapkaustaad-website
 
+Private Student Chat setup: see [STUDENT-CHAT-DEPLOYMENT.md](STUDENT-CHAT-DEPLOYMENT.md). Apply the Supabase migration, disable public/anonymous signup, deploy the Edge Functions and bootstrap an administrator before publishing the chat.
+
 AL-NOOR Educational Centre | Training, Exam Preparation \& Professional Development in Spain
 
 AL-NOOR Educational Centre

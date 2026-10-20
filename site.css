@@ -165,7 +165,7 @@ label { color: var(--ink); font-weight: 600; }
 .detleng-sticky-btn span { color: var(--blue) !important; }
 .detleng-sticky-btn:hover { background: #f4f7fb !important; transform: translateY(-1px) !important; }
 
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
   .site-spacer { height: 78px; }
   .detleng-nav { min-height: 64px; padding: 0 18px !important; grid-template-columns: 150px 1fr auto; }
   .detleng-logo, .detleng-logo img { width: 145px; max-height: 52px; }
