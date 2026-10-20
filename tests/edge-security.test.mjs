@@ -9,7 +9,7 @@ globalThis.__mockClient=()=>({rpc:async()=>({data:'10000000-0000-0000-0000-00000
 const source=read('_shared/security.ts').replace("import { createClient } from 'npm:@supabase/supabase-js@2.57.4';",'const createClient=globalThis.__mockClient;');
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(source)).toString('base64');
 const security=await import(moduleUrl);
-await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(read('chat-admin/index.ts').replace("'../_shared/security.ts'",JSON.stringify(moduleUrl)))).toString('base64'));
+await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(read('chat-admin/index.ts').replace("import {collectMedia} from '../_shared/media-gc.ts';",'const collectMedia=async()=>true;').replace("'../_shared/security.ts'",JSON.stringify(moduleUrl)))).toString('base64'));
 const adminHandler=handler;
 await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(read('chat-password/index.ts').replace("'../_shared/security.ts'",JSON.stringify(moduleUrl)))).toString('base64'));
 const passwordHandler=handler;

@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {stripTypeScriptTypes} from 'node:module';import {readFileSync} from 'node:fs';
+const code=stripTypeScriptTypes(readFileSync(new URL('../supabase/functions/_shared/media-validation.ts',import.meta.url),'utf8'));const {validateWav,validateBatch}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+function wav(seconds){const b=new Uint8Array(44+32000*seconds),v=new DataView(b.buffer);const str=(n,s)=>[...s].forEach((c,i)=>b[n+i]=c.charCodeAt(0));str(0,'RIFF');v.setUint32(4,b.length-8,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,16000,true);v.setUint32(28,32000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,b.length-44,true);return b;}
+test('valid 2-minute voice accepted using actual PCM length',()=>assert.equal(validateWav(wav(120)),120));
+test('more than 2 minutes rejected regardless of browser metadata',()=>assert.throws(()=>validateWav(wav(121))));
+test('forged type and truncated WAV rejected',()=>{assert.throws(()=>validateWav(new TextEncoder().encode('<script>not audio</script>')));assert.throws(()=>validateWav(wav(1).slice(0,50)));});
+test('stereo or altered sample rate rejected',()=>{const b=wav(1),v=new DataView(b.buffer);v.setUint16(22,2,true);assert.throws(()=>validateWav(b));v.setUint16(22,1,true);v.setUint32(24,8000,true);assert.throws(()=>validateWav(b));});
+test('empty recording rejected',()=>assert.throws(()=>validateWav(wav(0))));
+test('one through five images accepted; six denied',()=>{for(let i=1;i<=5;i++)assert.doesNotThrow(()=>validateBatch('image',i));assert.throws(()=>validateBatch('image',6));assert.throws(()=>validateBatch('image',0));});
+test('one voice only; video and mixed type denied',()=>{assert.doesNotThrow(()=>validateBatch('voice',1));assert.throws(()=>validateBatch('voice',2));assert.throws(()=>validateBatch('video',1));});

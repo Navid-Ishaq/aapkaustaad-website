@@ -1,4 +1,5 @@
 import {context,checked,requireValue,strong,uuid} from '../_shared/security.ts';
+import {collectMedia} from '../_shared/media-gc.ts';
 const validEmail=(v:unknown):v is string=>typeof v==='string'&&v.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 Deno.serve(async req=>{
  const c=await context(req);if(c.early)return c.early;
@@ -19,6 +20,10 @@ Deno.serve(async req=>{
   return p;
  }
  switch(b.action){
+ case 'media-settings':{
+  requireValue(uuid(b.class_id)&&['teacher_voice','student_voice','image_upload'].includes(b.setting)&&typeof b.enabled==='boolean','Invalid media setting');
+  checked(await admin.from('chat_classes').update({[b.setting]:b.enabled}).eq('id',b.class_id).select('id').single());target=b.class_id+':'+b.setting;break;
+ }
  case 'delete-account':{
   await managedTarget();
   requireValue(b.confirmation==='DELETE'&&validEmail(b.confirm_email),'Deletion confirmation required');
@@ -38,7 +43,7 @@ Deno.serve(async req=>{
   requireValue(b.confirmation==='DELETE'&&Number.isSafeInteger(b.expected_count)&&b.expected_count>=0&&Number.isSafeInteger(b.expected_revision)&&b.expected_revision>=0,'Preview and confirm deletion first');
   result=checked(await admin.rpc('chat_cleanup_execute',{p_actor:user.id,p_class:b.class_id,p_before:b.before_date,p_expected_count:b.expected_count,p_expected_revision:b.expected_revision}));
   // Cleanup audit is committed atomically inside the SQL function.
-  return reply({data:result});
+  return reply({data:{...result as object,storage_cleanup_pending:!await collectMedia(admin)}});
  }
  case 'list-accounts':{
   requireValue(b.kind==='students'||(b.kind==='teachers'&&isOwner),'Account list denied');

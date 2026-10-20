@@ -23,7 +23,7 @@ globalThis.__client=()=>({
 const read=p=>readFileSync(new URL('../supabase/functions/'+p,import.meta.url),'utf8');
 const shared=read('_shared/security.ts').replace("import { createClient } from 'npm:@supabase/supabase-js@2.57.4';",'const createClient=globalThis.__client;');
 const sharedURL='data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(shared)).toString('base64');
-await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(read('chat-admin/index.ts').replace("'../_shared/security.ts'",JSON.stringify(sharedURL)))).toString('base64'));
+await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(read('chat-admin/index.ts').replace("import {collectMedia} from '../_shared/media-gc.ts';",'const collectMedia=async()=>true;').replace("'../_shared/security.ts'",JSON.stringify(sharedURL)))).toString('base64'));
 async function request(action,extra={}){calls=[];const response=await handler(new Request('https://test/functions/v1/chat-admin',{method:'POST',headers:{Authorization:'Bearer valid',Origin:'https://aapkaustaad.com','Content-Type':'application/json'},body:JSON.stringify({action,user_id:target,...extra})}));return {status:response.status,body:await response.json()};}
 const reset=()=>{actorId=actor;targetRole='student';active=true;first=false;role='admin';authFails=false;ownerMissing=false;dbFails=false;};
 test('teacher can list student emails through server',async()=>{reset();const r=await request('list-accounts',{kind:'students'});assert.equal(r.status,200);assert.equal(r.body.data.accounts[0].email,'student@example.com');assert.equal(r.body.data.is_owner,false);});
