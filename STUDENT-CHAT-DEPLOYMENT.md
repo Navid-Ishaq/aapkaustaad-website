@@ -1,5 +1,7 @@
 # Private Student Chat deployment
 
+**Latest feature update:** see [STUDENT-CHAT-DELETION.md](STUDENT-CHAT-DELETION.md) for confirmed student/teacher deletion, Owner-only date-based history cleanup and the third migration. Apply upgrades in numeric order; never rerun already-applied migrations.
+
 **Current upgrade:** after the initial administrator bootstrap, apply the Owner migration and deploy the updated `chat-admin` function as described in [STUDENT-CHAT-UPGRADE.md](STUDENT-CHAT-UPGRADE.md). The compact account table, teacher creation and access restoration require that upgrade. For a fresh installation, bootstrap the initial admin with `mnvid@hotmail.com` before applying that migration; do not try to use the management UI until the upgrade is complete.
 
 The website stays on its existing host. The inquiry API and Hola AI chatbot are unchanged. No new Render service is needed. Supabase hosts authentication, chat history, Realtime and the two Edge Functions.

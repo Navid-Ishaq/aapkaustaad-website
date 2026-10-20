@@ -6,11 +6,11 @@ const actor='10000000-0000-0000-0000-000000000001',owner='10000000-0000-0000-000
 let actorId=actor,targetRole='student',active=true,first=false,role='admin',handler,calls=[],authFails=false,ownerMissing=false,dbFails=false;
 globalThis.Deno={env:{get:n=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'server-only'})[n]},serve:fn=>handler=fn};
 globalThis.__client=()=>({
- rpc:async()=>({data:ownerMissing?null:owner,error:null}),
+ rpc:async(name,args)=>{if(name==='chat_owner_id')return {data:ownerMissing?null:owner,error:null};calls.push(['rpc',name,args]);return {data:name==='chat_cleanup_preview'?{count:2,revision:1,class_id:classId,before_date:'2026-10-01'}:{deleted_count:2},error:null};},
  auth:{getUser:async()=>({data:{user:{id:actorId,email:'admin@example.com'}},error:null}),admin:{
   createUser:async b=>{calls.push(['create',b]);return {data:{user:{id:target}},error:null};},
   updateUserById:async(id,b)=>{calls.push(['auth-update',id,b]);return {data:{user:{id}},error:authFails?Error('failed'):null};},
-  getUserById:async id=>({data:{user:{id,email:'student@example.com'}},error:null}),deleteUser:async()=>({error:null})
+  getUserById:async id=>({data:{user:{id,email:'student@example.com'}},error:null}),deleteUser:async(id,soft)=>{calls.push(['auth-delete',id,soft]);return {error:authFails?Error('failed'):null};}
  }},
  from(table){let selectedId,filters={};let mutation=false;
   const b={select(){return b},eq(k,v){filters[k]=v;if(k==='id')selectedId=v;return b},in(){return b},order(){return b},range(){return b},
@@ -30,7 +30,7 @@ test('teacher can list student emails through server',async()=>{reset();const r=
 test('teacher cannot list other Teacher Admin accounts',async()=>{reset();assert.equal((await request('list-accounts',{kind:'teachers'})).status,400);});
 test('teacher cannot create Teacher Admin even with forged owner flag',async()=>{reset();const r=await request('create-teacher',{is_owner:true,role:'owner',name:'Teacher',email:'t@example.com',password:'Strong-Password123'});assert.equal(r.status,400);assert.equal(calls.length,0);});
 test('owner can create confirmed Teacher Admin with fixed role and forced initial password change',async()=>{reset();actorId=owner;assert.equal((await request('create-teacher',{name:'Teacher',email:'t@example.com',password:'Strong-Password123',role:'owner'})).status,200);assert.equal(calls.find(x=>x[0]==='create')[1].email_confirm,true);const p=calls.find(x=>x[0]==='insert'&&x[1]==='chat_profiles')[2];assert.equal(p.role,'admin');assert.equal(p.must_change_password,true);});
-for(const action of ['revoke','restore','change-email','reset-password','rename-account']){
+for(const action of ['revoke','restore','change-email','reset-password','rename-account','delete-account']){
  test('teacher cannot '+action+' another admin',async()=>{reset();targetRole='admin';assert.equal((await request(action,{email:'new@example.com',password:'Strong-Password123',name:'Renamed'})).status,400);assert.equal(calls.length,0);});
  test('owner account protected from '+action,async()=>{reset();assert.equal((await request(action,{user_id:owner,email:'new@example.com',password:'Strong-Password123',name:'Renamed'})).status,400);assert.equal(calls.length,0);});
 }
@@ -46,3 +46,14 @@ assert.equal((await request('assign',{class_id:classId})).status,200);assert.equ
 test('missing owner configuration fails closed',async()=>{reset();ownerMissing=true;assert.equal((await request('create-class',{name:'Class'})).status,400);assert.equal(calls.length,0);});
 test('student cannot call account-management endpoint',async()=>{reset();role='student';assert.equal((await request('list-accounts',{kind:'students'})).status,403);});
 test('database failure while revoking stops before Auth mutation',async()=>{reset();dbFails=true;assert.equal((await request('revoke')).status,400);assert.equal(calls.some(x=>x[0]==='auth-update'),false);});
+test('account deletion requires explicit confirmation',async()=>{reset();assert.equal((await request('delete-account')).status,400);assert.equal(calls.length,0);});
+test('changed email rejects account deletion',async()=>{reset();assert.equal((await request('delete-account',{confirmation:'DELETE',confirm_email:'wrong@example.com'})).status,400);assert.equal(calls.length,0);});
+test('student deletion revokes first then hard-deletes Auth identity',async()=>{reset();assert.equal((await request('delete-account',{confirmation:'DELETE',confirm_email:'student@example.com'})).status,200);assert.equal(calls[0][0],'update');assert.equal(calls[0][2].active,false);assert.equal(calls[1][0],'auth-delete');assert.equal(calls[1][2],false);});
+test('owner can delete Teacher Admin',async()=>{reset();actorId=owner;targetRole='admin';assert.equal((await request('delete-account',{confirmation:'DELETE',confirm_email:'student@example.com'})).status,200);assert.ok(calls.some(x=>x[0]==='auth-delete'));});
+test('Auth deletion failure reports failure and keeps account revoked',async()=>{reset();authFails=true;assert.equal((await request('delete-account',{confirmation:'DELETE',confirm_email:'student@example.com'})).status,400);assert.equal(calls[0][2].active,false);assert.equal(calls.some(x=>x[0]==='update'&&x[2].active===true),false);});
+for(const action of ['preview-cleanup','cleanup-history'])test('teacher denied '+action,async()=>{reset();assert.equal((await request(action,{class_id:classId,before_date:'2026-10-01'})).status,400);assert.equal(calls.length,0);});
+test('owner previews cleanup through service-only RPC with verified actor',async()=>{reset();actorId=owner;const r=await request('preview-cleanup',{class_id:classId,before_date:'2026-10-01',actor_id:actor});assert.equal(r.status,200);assert.equal(r.body.data.count,2);assert.equal(calls[0][2].p_actor,owner);});
+test('cleanup rejects missing confirmation before mutation',async()=>{reset();actorId=owner;assert.equal((await request('cleanup-history',{class_id:classId,before_date:'2026-10-01',expected_count:2,expected_revision:1})).status,400);assert.equal(calls.length,0);});
+test('cleanup requires count/revision preview values',async()=>{reset();actorId=owner;assert.equal((await request('cleanup-history',{class_id:classId,before_date:'2026-10-01',confirmation:'DELETE'})).status,400);assert.equal(calls.length,0);});
+test('cleanup forwards exact class date count revision to atomic RPC',async()=>{reset();actorId=owner;assert.equal((await request('cleanup-history',{class_id:classId,before_date:'2026-10-01',confirmation:'DELETE',expected_count:2,expected_revision:1})).status,200);assert.deepEqual(calls[0],['rpc','chat_cleanup_execute',{p_actor:owner,p_class:classId,p_before:'2026-10-01',p_expected_count:2,p_expected_revision:1}]);});
+test('cleanup rejects malformed cutoff',async()=>{reset();actorId=owner;assert.equal((await request('preview-cleanup',{class_id:classId,before_date:'yesterday'})).status,400);assert.equal(calls.length,0);});

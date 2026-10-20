@@ -19,6 +19,27 @@ Deno.serve(async req=>{
   return p;
  }
  switch(b.action){
+ case 'delete-account':{
+  await managedTarget();
+  requireValue(b.confirmation==='DELETE'&&validEmail(b.confirm_email),'Deletion confirmation required');
+  const auth=await admin.auth.admin.getUserById(b.user_id);
+  requireValue(!auth.error&&auth.data.user?.email?.toLowerCase()===b.confirm_email.trim().toLowerCase(),'Account email changed. Reload and confirm again.');
+  // Stop existing sessions first. On any failure, the account stays revoked for a safe retry.
+  checked(await admin.from('chat_profiles').update({active:false}).eq('id',b.user_id));
+  const deletion=await admin.auth.admin.deleteUser(b.user_id,false);
+  requireValue(!deletion.error,'Account deletion failed. Access stays revoked; retry after checking the migration.');
+  target=b.user_id;result={ok:true};break;
+ }
+ case 'preview-cleanup':
+ case 'cleanup-history':{
+  requireValue(isOwner,'Only the owner can delete class history');
+  requireValue(uuid(b.class_id)&&typeof b.before_date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(b.before_date),'Choose a class and valid cutoff date');
+  if(b.action==='preview-cleanup')return reply({data:checked(await admin.rpc('chat_cleanup_preview',{p_actor:user.id,p_class:b.class_id,p_before:b.before_date}))});
+  requireValue(b.confirmation==='DELETE'&&Number.isSafeInteger(b.expected_count)&&b.expected_count>=0&&Number.isSafeInteger(b.expected_revision)&&b.expected_revision>=0,'Preview and confirm deletion first');
+  result=checked(await admin.rpc('chat_cleanup_execute',{p_actor:user.id,p_class:b.class_id,p_before:b.before_date,p_expected_count:b.expected_count,p_expected_revision:b.expected_revision}));
+  // Cleanup audit is committed atomically inside the SQL function.
+  return reply({data:result});
+ }
  case 'list-accounts':{
   requireValue(b.kind==='students'||(b.kind==='teachers'&&isOwner),'Account list denied');
   const page=b.page??0;requireValue(Number.isInteger(page)&&page>=0&&page<=100000,'Invalid page');
