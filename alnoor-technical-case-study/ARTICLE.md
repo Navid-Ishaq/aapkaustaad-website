@@ -281,6 +281,16 @@ AL-NOOR started with a request for student chat. The result grew through the que
 
 ---
 
+## Visit the live project
+
+[Visit AL-NOOR Student Chat](https://aapkaustaad.com/student-chat.html)
+
+This is a private classroom system, not a public demo.
+Visitors can view the sign-in page; class conversations and
+management features require an authorized account.
+
+The screenshots above show the authenticated experience.
+
 **Implementation references:** [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Storage access control](https://supabase.com/docs/guides/storage/security/access-control), and [Edge Functions](https://supabase.com/docs/guides/functions).
 
 **Screenshot note:** Images are cropped from the project owner's supplied screenshots. Where accounts are visible, names and email addresses have been replaced with neutral example labels. The earlier and revised layouts are identified explicitly. Images were not generated as mock product evidence.
