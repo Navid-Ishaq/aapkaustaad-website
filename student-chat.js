@@ -1,3 +1,4 @@
+import { setupAdminNavigation } from './student-chat-navigation.js';
 import { createMediaTools } from './student-chat-media.js';
 let mediaTools;
 import { createAdminTools } from './student-chat-admin.js';
@@ -35,6 +36,7 @@ bindForm('class-form',async()=>{await edge('chat-admin',{action:'create-class',n
 bindForm('student-form',async()=>{const class_ids=[...$('student-classes').querySelectorAll('input:checked')].map(x=>x.value);await edge('chat-admin',{action:'create-student',name:$('student-name').value,email:$('student-email').value,password:$('student-password').value,class_ids});$('student-form').reset();await loadAdmin();status('Student account created. No email sent. Give the student their login details privately.');});
 $('logout').onclick=()=>run($('logout'),async()=>{await clearChat();check(await db.auth.signOut());await signedOut();status('Logged out.');});$('password-toggle').onclick=()=>{$('password-panel').hidden=!$('password-panel').hidden;};$('admin-toggle').onclick=()=>{$('admin-panel').hidden=!$('admin-panel').hidden;};$('cancel-reply').onclick=()=>{replyTo=null;$('reply-preview').hidden=true;};$('older').onclick=()=>run($('older'),()=>history(true));
 db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')setTimeout(()=>run(null,signedOut),0);});
+setupAdminNavigation(()=>profile);
 await loadAccount();setInterval(async()=>{if(!profile||accessBusy)return;accessBusy=true;try{const p=check(await db.from('chat_profiles').select('*').eq('id',profile.id).single());if(!p?.active){await signedOut();await db.auth.signOut();status('Your access has been revoked. Please contact your teacher.',true);return;}profile=p;if(p.must_change_password){adminTools?.reset();$('admin-panel').hidden=true;await clearChat();$('workspace').hidden=true;$('password-panel').hidden=false;return;}await loadClasses();}catch(e){if(e.code==='PGRST116'||e.status===401){await signedOut();await db.auth.signOut();status('Your account is unavailable. Please contact your teacher.',true);}else{await clearChat();status('Unable to verify access. Reconnect or log in again.',true);}}finally{accessBusy=false;}},15000);
 window.addEventListener('chat:refresh-admin',()=>run(null,refreshAdmin));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&profile)run(null,loadAccount);});
