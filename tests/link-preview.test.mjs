@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {stripTypeScriptTypes} from 'node:module';
-const source=readFileSync(new URL('../supabase/functions/_shared/link-preview.ts',import.meta.url),'utf8');const {previewUrl,metadata,boundedText,fetchPreview}=await import('data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(source)).toString('base64'));
+const {previewModuleUrl}=await import('./preview-test-loader.mjs');const {previewUrl,metadata,boundedText,fetchPreview}=await import(previewModuleUrl());
 for(const url of ['http://127.0.0.1','http://169.254.169.254/latest/meta-data/','http://localhost','http://[::1]','file:///etc/passwd','https://aapkaustaad.com.evil.example','https://user:password@aapkaustaad.com','https://aapkaustaad.com:4430','https://untrusted.example'])test('reject unsupported target '+url,()=>assert.throws(()=>previewUrl(url)));
 test('trusted HTTP upgraded and fragment removed',()=>assert.equal(previewUrl('http://aapkaustaad.com/#secret').href,'https://aapkaustaad.com/'));
 test('extracts Open Graph attributes in either order and decodes entities',()=>assert.deepEqual(metadata('<meta content="Title &amp; Name" property="og:title"><meta name="description" content="A classroom">'),{title:'Title & Name',description:'A classroom'}));

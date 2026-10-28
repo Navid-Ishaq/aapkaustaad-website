@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 export { createClient };
-export const strong = (p: unknown): p is string => typeof p === 'string' && p.length >= 12 && p.length <= 128 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /[0-9]/.test(p) && /[^A-Za-z0-9\s]/.test(p);
+export const strong = (p: unknown): p is string => typeof p === 'string' && p.length >= 8 && p.length <= 128 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /[0-9]/.test(p) && /[^A-Za-z0-9\s]/.test(p);
 export const uuid = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 export function requireValue(ok: unknown, message: string): asserts ok { if (!ok) throw new Error(message); }
 export function checked<T>(result: {data:T;error:unknown}): T { if(result.error) throw new Error('Database operation failed'); return result.data; }

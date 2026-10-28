@@ -20,8 +20,8 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
  function openEditor(p,kind){
   edit={p,kind};$('account-edit-form').reset();$('edit-error').textContent='';$('edit-title').textContent=(kind==='password'?'Reset password':kind==='email'?'Change email':'Edit name')+' · '+p.display_name;
   $('edit-value-label').textContent=kind==='password'?'New temporary password':kind==='email'?'Email address':'Display name';
-  const input=$('edit-value');input.type=kind==='password'?'password':kind==='email'?'email':'text';input.autocomplete=kind==='password'?'new-password':'off';input.minLength=kind==='password'?12:1;input.maxLength=kind==='password'?128:kind==='email'?254:80;input.value=kind==='email'?p.email:kind==='name'?p.display_name:'';
-  $('edit-confirm-wrap').hidden=kind!=='password';$('edit-confirm').required=kind==='password';$('edit-help').textContent=kind==='password'?'Use 12–128 characters with uppercase, lowercase, number and symbol. The student/teacher must change this temporary password before using chat.':kind==='email'?'This changes the login email directly. Verify the spelling before saving.':'Existing messages keep the name recorded when they were sent.';
+  const input=$('edit-value');input.type=kind==='password'?'password':kind==='email'?'email':'text';input.autocomplete=kind==='password'?'new-password':'off';input.minLength=kind==='password'?8:1;input.maxLength=kind==='password'?128:kind==='email'?254:80;input.value=kind==='email'?p.email:kind==='name'?p.display_name:'';
+  $('edit-confirm-wrap').hidden=kind!=='password';$('edit-confirm').required=kind==='password';$('edit-help').textContent=kind==='password'?'Use 8–128 characters with uppercase, lowercase, number and symbol. You can change your password anytime from your account.':kind==='email'?'This changes the login email directly. Verify the spelling before saving.':'Existing messages keep the name recorded when they were sent.';
   dialog.showModal();input.focus();
  }
  $('edit-cancel').onclick=()=>{if(!saveBusy)dialog.close();};
@@ -32,7 +32,7 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
   if(kind==='password'&&$('edit-value').value!==$('edit-confirm').value){$('edit-error').textContent='Passwords do not match.';return;}
   saveBusy=true;$('edit-save').disabled=true;$('edit-cancel').disabled=true;
   try{await edge('chat-admin',{action:kind==='password'?'reset-password':kind==='email'?'change-email':'rename-account',user_id:p.id,...(kind==='password'?{password:$('edit-value').value}:kind==='email'?{email:$('edit-value').value}:{name:$('edit-value').value})});
-   if(ticket!==version)return;dialog.close();await load();status(kind==='password'?'Temporary password set. Share it privately; the account must change it on next login.':'Account updated.');
+   if(ticket!==version)return;dialog.close();await load();status(kind==='password'?'Password set. Share it privately. The account can change it anytime.':'Account updated.');
   }catch(error){if(ticket===version)$('edit-error').textContent=error.message;}finally{saveBusy=false;$('edit-save').disabled=false;$('edit-cancel').disabled=false;}
  };
  function classPicker(p,memberships){
@@ -68,7 +68,7 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
    if(p.is_owner){name.append(element('strong',p.display_name));email.append(element('span',p.email));password.append(element('span','Use Change password','sc-muted'));classes.append(element('span','Owner','sc-owner-badge'));access.append(element('span','Protected','sc-enabled'));}
    else{name.append(button(p.display_name,()=>openEditor(p,'name'),'sc-text-edit'));email.append(button(p.email||'Set email',()=>openEditor(p,'email'),'sc-text-edit'));password.append(button('Reset password',()=>openEditor(p,'password'),'sc-small-button'));classes.append(kind==='teachers'?element('span','Teacher Admin','sc-muted'):classPicker(p,memberships));access.append(accessControl(p));}
    const actions=element('td');if(p.is_owner)actions.append(element('span','—','sc-muted'));else{const menu=element('select');menu.className='sc-account-actions';menu.setAttribute('aria-label','Actions for '+p.display_name);const placeholder=element('option','Actions ▾');placeholder.value='';const remove=element('option','Delete account…');remove.value='delete';menu.append(placeholder,remove);menu.onchange=()=>{if(menu.value==='delete')openDeletion({kind:'account',p});menu.value='';};actions.append(menu);}
-   if(p.must_change_password&&!p.is_owner)name.append(element('small','Password change pending','sc-pending'));row.append(name,email,password,classes,access,actions);body.append(row);
+   row.append(name,email,password,classes,access,actions);body.append(row);
   }
   if(!accounts.length){const row=element('tr'),cell=element('td','No '+(kind==='teachers'?'Teacher Admins':'students')+' on this page.');cell.colSpan=6;row.append(cell);body.append(row);}
   table.append(head,body);const scroll=element('div',undefined,'sc-table-scroll');scroll.append(table);container.append(scroll);

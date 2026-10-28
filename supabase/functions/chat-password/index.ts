@@ -3,7 +3,7 @@ Deno.serve(async req=>{
  const c=await context(req);if(c.early)return c.early;
  const {admin,user,reply,url}=c;
  try{
- const b=await req.json();requireValue(strong(b.password),'Use 12–128 characters with uppercase, lowercase, number and symbol');
+ const b=await req.json();requireValue(strong(b.password),'Use 8–128 characters with uppercase, lowercase, number and symbol');
  requireValue(typeof b.current_password==='string'&&b.current_password.length<=128,'Current password required');
  requireValue(b.password!==b.current_password,'Choose a different password');
  const verifier=createClient(url,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
