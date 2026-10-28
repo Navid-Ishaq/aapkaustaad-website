@@ -1,0 +1,17 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {stripTypeScriptTypes} from 'node:module';
+let active=true,initial=false,member=true,archived=false,role='student',handler,fetches=0;const cid='20000000-0000-0000-0000-000000000005',uid='10000000-0000-0000-0000-000000000002';
+globalThis.Deno={env:{get:n=>({SUPABASE_URL:'https://example.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'test'})[n]},serve:fn=>handler=fn};
+globalThis.__previewClient=()=>({auth:{getUser:async token=>({data:{user:token==='valid'?{id:uid}:null},error:token==='valid'?null:Error('invalid')})},from(table){const q={select(){return q},eq(){return q},single:async()=>table==='chat_profiles'?{data:{active,must_change_password:initial,role}}:table==='chat_classes'?{data:{id:cid,archived}}:{data:member?{user_id:uid}:null,error:member?null:Error('denied')}};return q;}});
+globalThis.fetch=async()=>{fetches++;return new Response('<title>AL-NOOR</title>',{headers:{'content-type':'text/html'}});};
+const read=p=>readFileSync(new URL('../supabase/functions/'+p,import.meta.url),'utf8'),url=s=>'data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(s)).toString('base64');const shared=url(read('_shared/security.ts').replace("import { createClient } from 'npm:@supabase/supabase-js@2.57.4';",'const createClient=globalThis.__previewClient;')),preview=url(read('_shared/link-preview.ts'));
+await import(url(read('chat-preview/index.ts').replace("'../_shared/security.ts'",JSON.stringify(shared)).replace("'../_shared/link-preview.ts'",JSON.stringify(preview))));
+async function request(token='valid',target='https://aapkaustaad.com'){const r=await handler(new Request('https://test/chat-preview',{method:'POST',headers:{Authorization:'Bearer '+token,Origin:'https://aapkaustaad.com'},body:JSON.stringify({class_id:cid,url:target})}));return {status:r.status,body:await r.json()};}const reset=()=>{active=true;initial=false;member=true;archived=false;role='student';fetches=0;};
+test('preview rejects forged authentication',async()=>{reset();assert.equal((await request('forged')).status,401);assert.equal(fetches,0);});
+test('preview rejects revoked profile',async()=>{reset();active=false;assert.equal((await request()).status,403);assert.equal(fetches,0);});
+test('preview gated by initial password change',async()=>{reset();initial=true;assert.equal((await request()).status,400);assert.equal(fetches,0);});
+test('preview rejects nonmember before outbound request',async()=>{reset();member=false;assert.equal((await request()).status,400);assert.equal(fetches,0);});
+test('preview rejects archived class',async()=>{reset();archived=true;assert.equal((await request()).status,400);assert.equal(fetches,0);});
+test('member may retrieve trusted metadata',async()=>{reset();const r=await request();assert.equal(r.status,200);assert.equal(r.body.data.title,'AL-NOOR');assert.equal(fetches,1);});
+test('cached metadata still requires current membership',async()=>{reset();member=false;assert.equal((await request()).status,400);assert.equal(fetches,0);});
+test('unsupported address returns fallback without fetch',async()=>{reset();assert.equal((await request('valid','http://127.0.0.1')).body.data,null);assert.equal(fetches,0);});
+test('active admin has application-wide class access',async()=>{reset();role='admin';member=false;assert.equal((await request('valid','https://aapkaustaad.com/about.html')).body.data.title,'AL-NOOR');});

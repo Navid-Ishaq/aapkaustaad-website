@@ -22,3 +22,6 @@ verify_jwt = false
 
 [functions.chat-media]
 verify_jwt = false
+
+[functions.chat-preview]
+verify_jwt = false

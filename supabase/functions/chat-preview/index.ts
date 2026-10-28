@@ -1,0 +1,8 @@
+import {context,checked,requireValue,uuid} from '../_shared/security.ts';
+import {previewUrl,fetchPreview,boundedText} from '../_shared/link-preview.ts';
+const cache=new Map<string,{until:number,data:unknown}>(),rates=new Map<string,{until:number,count:number}>();
+Deno.serve(async req=>{const c=await context(req,4096);if(c.early)return c.early;const {admin,user,profile,reply}=c;try{
+ requireValue(!profile.must_change_password,'Change your initial password first');const b=JSON.parse(await boundedText(req.body,4096));requireValue(uuid(b.class_id),'Choose a class');const cl=checked(await admin.from('chat_classes').select('id,archived').eq('id',b.class_id).single());requireValue(cl&&!cl.archived,'Class unavailable');if(profile.role!=='admin'){const member=await admin.from('chat_memberships').select('user_id').eq('class_id',b.class_id).eq('user_id',user.id).single();requireValue(!member.error&&member.data,'Class access denied');}
+ let url;try{url=previewUrl(b.url).href;}catch{return reply({data:null});}const now=Date.now(),hit=cache.get(url);if(hit&&hit.until>now)return reply({data:hit.data});for(const [key,value] of rates)if(value.until<now)rates.delete(key);const rate=rates.get(user.id)||{until:now+60000,count:0};requireValue(rate.count<30,'Preview limit reached. Please try later.');if(rates.size>=1000&&!rates.has(user.id))return reply({data:null});rate.count++;rates.set(user.id,rate);
+ let data=null;try{data=await fetchPreview(url);}catch{}if(cache.size>=200)cache.delete(cache.keys().next().value!);cache.set(url,{until:now+300000,data});return reply({data});
+ }catch(e){return reply({error:e instanceof Error?e.message:'Preview unavailable'},400);}});
