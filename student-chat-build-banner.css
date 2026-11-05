@@ -1,0 +1,12 @@
+/* Public documentation entry only. Does not change chat permissions or messaging. */
+#student-chat .sc-heading-extras{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;min-width:0}
+#student-chat .sc-heading-extras #account-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#student-chat .sc-heading-extras #account-actions[hidden]{display:none!important}
+#student-chat .sc-how-built-link{position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:10px 18px;border:1px solid rgba(255,255,255,.86);border-radius:100px;background:linear-gradient(105deg,#fff 0%,#f2fbff 53%,#dcfff2 100%);box-shadow:0 6px 24px rgba(9,31,80,.26),inset 0 1px 0 #fff;color:#164d86!important;text-decoration:none!important;font:800 13px/1.2 Inter,"Segoe UI",Arial,sans-serif;letter-spacing:.01em;white-space:nowrap;transition:transform .2s ease,box-shadow .2s ease}
+#student-chat .sc-how-built-link::after{position:absolute;z-index:-1;inset:-70% auto -70% -55%;width:46%;content:"";background:linear-gradient(90deg,transparent,rgba(255,255,255,.84),transparent);transform:rotate(18deg);animation:sc-doc-glint 7s ease-in-out infinite}
+#student-chat .sc-how-built-link:hover{transform:translateY(-2px);box-shadow:0 9px 25px rgba(9,31,80,.32)}
+#student-chat .sc-how-built-link:focus-visible{outline:3px solid #fff!important;outline-offset:4px}
+#student-chat .sc-how-built-link .sc-link-arrow{font-size:18px;line-height:1}
+@keyframes sc-doc-glint{0%,64%,100%{left:-55%}79%{left:125%}}
+@media(max-width:760px){#student-chat .sc-heading-extras{gap:6px;justify-content:flex-start}#student-chat .sc-how-built-link{padding:8px 13px;min-height:38px;font-size:12px}#student-chat.sc-signed-in .sc-how-built-link{padding:5px 10px;min-height:30px;font-size:11px}#student-chat .sc-heading-extras #account-actions{gap:5px}#student-chat.sc-signed-in .sc-heading-extras #account-actions{gap:4px}}
+@media(prefers-reduced-motion:reduce){#student-chat .sc-how-built-link::after{animation:none}#student-chat .sc-how-built-link{transition:none}}

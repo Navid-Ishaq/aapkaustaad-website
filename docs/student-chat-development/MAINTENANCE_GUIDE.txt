@@ -1,0 +1,80 @@
+AL-NOOR STUDENT CHAT — HOW TO BUILD READER
+MAINTENANCE GUIDE | 5 November 2026
+============================================
+
+PURPOSE
+This folder holds the one editable source for the public development
+journey at https://aapkaustaad.com/student-chat-how-to-build.html.
+The website reads the Markdown at runtime, so future text changes do not
+require new JavaScript or CSS edits.
+
+DOCUMENTATION SOURCE — UPDATE THIS FILE ONLY
+  docs/student-chat-development/DEVELOPMENT_JOURNEY.md
+
+WHEN A NEW VERSION IS READY
+1. Open DEVELOPMENT_JOURNEY.md in any text editor.
+2. Update the text, preserving Markdown heading syntax. Use "##" for
+   chapters and "###" for subheadings. Existing chapters can remain.
+3. To preserve the development history, add a dated item at the END under
+   "## Development updates". Do not silently rewrite previous milestones.
+4. Save as UTF-8 with the exact same filename. Do not rename or move it.
+5. From the local project root, check and publish only the intended changes:
+
+   cd "D:\DETLENG2\aapkaustaad-website"
+   git status --short
+   git add docs/student-chat-development/DEVELOPMENT_JOURNEY.md
+   git commit -m "Update Student Chat development journey"
+   git push origin main
+
+6. Wait for the site's configured GitHub Pages deployment to finish.
+   Open student-chat-how-to-build.html in your browser and refresh.
+   Verify a changed paragraph, the chapter list, links and tables.
+   If the page looks cached, force refresh (Ctrl+F5).
+
+FIRST-TIME DEPLOYMENT
+The first installation also adds these files to the GitHub Pages root:
+  .nojekyll
+  student-chat-how-to-build.html
+  student-chat-how-to-build.css
+  student-chat-how-to-build.js
+  student-chat-how-to-build-markdown.js
+  student-chat-build-banner.css
+and updates student-chat.html to add the public banner link and English
+registration notice. After this initial deployment, ONLY the Markdown
+file needs editing for content updates.
+
+CONTENT RULES
+- Start from the retained original report, including its history and
+  evidence. Add dated updates rather than pretending older features were
+  always present.
+- Use "##" for each table-of-contents chapter. The reader automatically
+  generates chapter IDs, menu entries, search and progress from headings.
+- Simple Markdown paragraphs, **bold**, *italic*, links, bullet lists,
+  quotes, code and pipe tables are supported. Raw HTML is displayed as text.
+- Use HTTPS links to public pages. Do not publish passwords, API keys,
+  personal student information, private chat messages or contact lists.
+- The public reader does NOT use Supabase and never requires student login.
+- If you rename the source file, move folders or change the reader's URL,
+  the JavaScript source path and links will need a one-time code update.
+
+SAFEGUARDS
+- Do not change student-chat.js, Supabase migrations/functions, chat admin
+  roles or the private storage bucket to update this document.
+- The reader intentionally fetches the real Markdown file, not a hardcoded
+  copy. The .nojekyll marker keeps GitHub Pages from processing Markdown.
+- Git pushes alone are not proof of deployment; check the hosted page.
+- Use the original repository Git history to recover from a bad update.
+
+SMOKE TESTS AFTER FIRST INSTALL
+  node --test tests/student-chat-how-to-build.test.mjs
+  node --test api/server.test.js
+  Open Student Chat logged out: public button and English notice work.
+  Open the reader on desktop and mobile. Scroll the report to the bottom:
+  top progress stays visible and chapter list stays visible on desktop.
+  Pick a chapter: heading is not hidden behind the fixed website header.
+  Test the search, active chapter highlight and mobile chapter selector.
+  Log in with a safe test account if available; original chat must still work.
+
+CHANGE RECORD
+5 November 2026: Added public How to Build reader, scoped responsive
+navigation, Markdown maintenance workflow and English login notice.
