@@ -8,10 +8,11 @@ $branch=(& git branch --show-current).Trim()
 if(!$branch){throw 'Detached HEAD'}
 GitRun fetch origin
 GitRun status --short
+if($branch -eq "main"){throw "Direct main push disabled. Use a reviewed branch and pull request."}
 GitRun add -A
 $files=@(& git diff --cached --name-only)
-if($files | Where-Object {$_ -match '(?i)(^|/)(private-learning/|\.env($|\.)|.*\.xml$|learning-seed.*\.zip$|learning-history.*\.csv$)' -and $_ -notmatch '\.env\.example$'}){throw 'Private material staged. Unstage before pushing.'}
+if($files | Where-Object {$_ -match '(?i)(^|/)(private-learning/|\.env($|\.)|.*\.xml$|learning-seed.*\.zip$|learning-history.*\.csv$|tests-34-51\.json$)' -and $_ -notmatch '\.env\.example$'}){throw 'Private material staged. Unstage before pushing.'}
 GitRun diff --cached --stat
-if((Read-Host "Review staged changes. Push to $branch? Type PUSH") -ne 'PUSH'){throw 'Cancelled; no push'}
+if((Read-Host "Review staged changes. Push to ${branch}? Type PUSH") -ne 'PUSH'){throw 'Cancelled; no push'}
 if($files.Count){$msg=Read-Host 'Commit message';if(!$msg){$msg='Update academy website'};GitRun commit -m $msg}
 GitRun push -u origin $branch

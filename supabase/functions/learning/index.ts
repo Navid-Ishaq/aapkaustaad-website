@@ -64,11 +64,12 @@ Deno.serve(async req=>{
   checked(await table('access').upsert({user_id:b.student,course_id:id(b.course),enabled:b.enabled===true,en:b.en===true,es:b.es===true,last_activity:new Date().toISOString()}));
  }else if(b.action==='group'){
   if(b.enabled===false)checked(await table('groups').delete().eq('class_id',id(b.class)).eq('course_id',id(b.course)));else checked(await table('groups').upsert({class_id:id(b.class),course_id:id(b.course),en:b.en===true,es:b.es===true}));
- }else if(b.action==='publish')checked(await table('tests').update({published:b.published===true}).eq('id',id(b.test)));
- else if(b.action==='cleanup'){
-  await owner();requireValue(typeof b.before==='string'&&Number.isFinite(Date.parse(b.before)),'Invalid cutoff');let query=b.action==='cleanup-preview'?table('attempts').select('id',{count:'exact',head:true}):table('attempts').delete({count:'exact'});query=query.lt('finished_at',b.before);if(b.student)query=query.eq('user_id',id(b.student));if(b.action==='cleanup'&&b.confirm!=='DELETE')return reply({error:'Type DELETE to confirm'},400);const r=await query;if(r.error)throw r.error;return reply({deleted:r.count});
+ }else if(b.action==='test-rename')checked(await table('tests').update({name:text(b.name)}).eq('id',id(b.test)));
+ else if(b.action==='publish')checked(await table('tests').update({published:b.published===true}).eq('id',id(b.test)));
+ else if(['cleanup','cleanup-preview'].includes(b.action)){
+  await owner();requireValue(typeof b.before==='string'&&Number.isFinite(Date.parse(b.before)),'Invalid cutoff');let query=b.action==='cleanup-preview'?table('attempts').select('id',{count:'exact',head:true}):table('attempts').delete({count:'exact'});query=query.lt('finished_at',b.before);if(b.student)query=query.eq('user_id',id(b.student));if(b.course){const sections=checked(await table('sections').select('id').eq('course_id',id(b.course)));const ids=sections.length?checked(await table('tests').select('id').in('section_id',sections.map((x:any)=>x.id))):[];if(!ids.length)return reply({deleted:0});query=query.in('test_id',ids.map((x:any)=>x.id));}if(b.action==='cleanup'&&b.confirm!=='DELETE')return reply({error:'Type DELETE to confirm'},400);const r=await query;if(r.error)throw r.error;return reply({deleted:r.count});
  }else if(b.action==='history'){
-  let query=table('attempts').select('id,user_id,test_id,score,total,passed,seconds,finished_at').not('finished_at','is',null).order('finished_at',{ascending:false}).limit(1000);if(b.student)query=query.eq('user_id',id(b.student));return reply({rows:checked(await query)});
+  let query=table('attempts').select('id,user_id,test_id,score,total,passed,seconds,finished_at').not('finished_at','is',null).order('finished_at',{ascending:false}).limit(1000);if(b.student)query=query.eq('user_id',id(b.student));if(b.course){const sections=checked(await table('sections').select('id').eq('course_id',id(b.course)));const ids=sections.length?checked(await table('tests').select('id').in('section_id',sections.map((x:any)=>x.id))):[];if(!ids.length)return reply({rows:[]});query=query.in('test_id',ids.map((x:any)=>x.id));}return reply({rows:checked(await query)});
  }else throw new Error('Unknown action');
  return reply({ok:true});
  }catch(e){console.error(String(e));return reply({error:'Operation denied or failed. Check permissions and inputs.'},400);}

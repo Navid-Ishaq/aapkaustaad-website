@@ -2,11 +2,16 @@
 import argparse, base64, getpass, hashlib, io, json, os, re, urllib.request, urllib.error
 from pathlib import Path
 from PIL import Image
-p=argparse.ArgumentParser();p.add_argument('file',type=Path);p.add_argument('--course',default='DRV-B');p.add_argument('--section',default='General Tests');p.add_argument('--publish',action='store_true');p.add_argument('--minutes',type=int,default=30);p.add_argument('--max-errors',type=int,default=3);a=p.parse_args()
-url='https://wxgtrydzkrlimmlnvhdk.supabase.co';key=getpass.getpass('Supabase legacy service_role key (hidden): ')
+p=argparse.ArgumentParser();p.add_argument('file',type=Path);p.add_argument('--course',default='DRV-B');p.add_argument('--section',default='General Tests');p.add_argument('--publish',action='store_true');p.add_argument('--minutes',type=int,default=30);p.add_argument('--max-errors',type=int,default=3);p.add_argument('--url', required=True, help='Explicit Supabase API URL');p.add_argument('--production',action='store_true',help='Allow the academy production endpoint after confirmation');a=p.parse_args()
+url=a.url.rstrip('/')
+if url not in ('http://127.0.0.1:54321','http://localhost:54321'):
+    if url!='https://wxgtrydzkrlimmlnvhdk.supabase.co' or not a.production:raise SystemExit('Refusing non-local target without explicit production approval')
+    if input('Type PRODUCTION to authorize production import: ')!='PRODUCTION':raise SystemExit('Cancelled')
+key=os.environ.get('ALNOOR_IMPORT_KEY') or getpass.getpass('Supabase service_role / secret key (hidden): ')
 if not key:raise SystemExit('Missing key')
 def req(path,method='GET',data=None,ctype='application/json',extra=None):
-    h={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':ctype,**(extra or {})}
+    h={'apikey':key,'Content-Type':ctype,**(extra or {})}
+    if not key.startswith('sb_secret_'):h['Authorization']='Bearer '+key
     if data is not None and not isinstance(data,bytes):data=json.dumps(data,ensure_ascii=False).encode()
     try:
         with urllib.request.urlopen(urllib.request.Request(url+path,data=data,headers=h,method=method),timeout=60) as r:
@@ -22,7 +27,8 @@ for number,questions in source.items():
     assert 0<=a.max_errors<len(questions)
     for q in questions:
         assert isinstance(q['es'],str) and isinstance(q['en'],str) and len(q['opts'])>=2 and all(len(x)==2 and all(isinstance(t,str) for t in x) for x in q['opts']) and type(q['correct']) is int and 0<=q['correct']<len(q['opts'])
-    if find('learn_tests',section_id=sid,number=str(number)):raise SystemExit(f'Test {number} already exists; no overwrite')
+    if find('learn_tests',section_id=sid,number=str(number)):
+        print(f'Skipping existing Test {number}; no overwrite');continue
     for q in questions:
         for field in ('imgs','refs'):
             out=[]

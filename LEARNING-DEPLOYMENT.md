@@ -47,7 +47,7 @@ The script checks the remote, fetches, stages nonignored changes, rejects known 
 
 ## 2. Test environment first
 
-Use a disposable Supabase project with equivalent chat migrations and test accounts. The owner migration expects the existing designated owner account; adapt bootstrap only for the disposable project. Do not run all old migrations again on production. The new migration requires existing chat tables, owner function, storage and Supabase roles. Apply `202611250001_learning.sql` exactly once after backing up and confirming migration history. For production use the existing project only after staging acceptance. The importer currently points at the existing project: change its URL to your staging project before testing. The browser config likewise needs staging values, and the allowed origins secret must include the exact staging web origin. Never use a service_role key in browser configuration. Deploy only the new function:
+Use a disposable Supabase project with equivalent chat migrations and test accounts. The owner migration expects the existing designated owner account; adapt bootstrap only for the disposable project. Do not run all old migrations again on production. The new migration requires existing chat tables, owner function, storage and Supabase roles. Apply `202611250001_learning.sql` exactly once after backing up and confirming migration history. For production use the existing project only after staging acceptance. Release 2 importer requires an explicit --url and refuses non-local targets unless the exact academy production URL, --production and typed confirmation are supplied. The browser config likewise needs staging values, and the allowed origins secret must include the exact staging web origin. Never use a service_role key in browser configuration. Deploy only the new function:
 
 ```powershell
 npx supabase login
@@ -70,14 +70,14 @@ Keep seed/XML outside the checkout (e.g. D:\DETLENG2\private-learning). Install 
 py -m pip install pillow beautifulsoup4 defusedxml
 Expand-Archive "$env:USERPROFILE\Downloads\learning-seed-private.zip" 'D:\DETLENG2\private-learning'
 # After verifying importer URL points to the intended database:
-py scripts/import_learning.py 'D:\DETLENG2\private-learning\tests-34-51.json'
+py scripts/import_learning.py 'D:\DETLENG2\private-learning\tests-34-51.json' --url http://127.0.0.1:54321
 ```
 
-Importer prompts for the legacy service_role key locally (hidden); never send it to ChatGPT or commit it. No overwrite of existing test numbers in a collection. Imported tests are drafts by default; publish through Learning Administration after review. Images are compressed and addressed by SHA-256. Failed imports may leave unreferenced image objects; do not delete objects without checking other test references. To add a new test, create course/collection first, then:
+Importer prompts for the legacy service_role key locally (hidden); never send it to ChatGPT or commit it. Existing test numbers are skipped without overwrite, allowing safe retry of partially completed batches. Imported tests are drafts by default; publish through Learning Administration after review. Images are compressed and addressed by SHA-256. Failed imports may leave unreferenced image objects; do not delete objects without checking other test references. To add a new test, create course/collection first, then:
 
 ```powershell
 py scripts/convert_moodle.py 'D:\DETLENG2\private-learning\Test-52.xml' 52 'D:\DETLENG2\private-learning\Test-52.json'
-py scripts/import_learning.py 'D:\DETLENG2\private-learning\Test-52.json' --course DRV-B --section 'General Tests'
+py scripts/import_learning.py 'D:\DETLENG2\private-learning\Test-52.json' --course DRV-B --section 'General Tests' --url http://127.0.0.1:54321
 ```
 
 Use `--language es` or `--language en` with converter for single-language source. Assign students matching language permissions. `--minutes` and `--max-errors` customize rules on import. Import multiple files by running the two commands for each. Publishing test data does not require a GitHub push. Existing course codes can be managed through the admin UI. Keep original XML backups outside GitHub.
@@ -90,3 +90,7 @@ Use `--language es` or `--language en` with converter for single-language source
 - Verify correct answers not returned before exam completion, timing, answer selection, scoring, reference image access, image expiry, navigation, mobile, permission revocation, simultaneous requests, failed network requests, unfinished attempts.
 - Verify CSV and cleanup preview on dummy records. Confirm database/storage and bandwidth quotas on current Supabase plan and existing usage. Implement remaining blockers above; obtain owner approval before deployment.
 - Rollback frontend by reverting the reviewed merge commit (no force push). Do not drop learning tables containing real results without backup and explicit owner approval. Disable new module or function if needed; existing chat uses independent tables/functions.
+
+## Release 2 changes
+
+Fixed cleanup preview routing, scoped cleanup and recent CSV export to selected course, added test display-name editing, improved learning-only CSS and logout contrast, and corrected push confirmation interpolation with a direct-main guard. The importer requires an explicit endpoint and accepts a local legacy service role or secret key through a hidden prompt or temporary process environment. No original chat files changed in this release. Local database acceptance and remaining advanced features still pending; no production deployment.
