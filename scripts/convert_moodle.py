@@ -8,7 +8,7 @@ from PIL import Image
 p=argparse.ArgumentParser();p.add_argument('xml',type=Path);p.add_argument('number',type=int);p.add_argument('output',type=Path);p.add_argument('--language',choices=['both','es','en'],default='both');a=p.parse_args()
 assert a.number>0
 
-def extract(node):
+def extract(node, preserve_all_text=False):
     if node is None:return [],[]
     soup=BeautifulSoup(node.findtext('text') or '', 'html.parser');imgs=[]
     files={f.get('name'):f.text for f in node.findall('file')}
@@ -20,6 +20,10 @@ def extract(node):
         else:raise ValueError('Unsupported image source: '+src[:100])
         im.decompose()
     for br in soup.find_all('br'):br.replace_with('\n')
+    if preserve_all_text:
+        for block in soup.find_all(['p','div','li','h1','h2','h3','h4','tr']):
+            block.append('\n')
+        return [' '.join(x.split()) for x in soup.get_text().splitlines() if x.strip()],imgs
     blocks=soup.find_all(['p','h1','h2','h3','h4','div'],recursive=False)
     lines=[]
     for b in blocks or [soup]:
@@ -45,8 +49,9 @@ for q in parse(a.xml).getroot().findall('question'):
         if fraction==100:correct.append(i)
         elif fraction!=0:raise ValueError('Partial credit not supported')
     if len(correct)!=1 or len(opts)<2:raise ValueError('Expected exactly one correct option')
-    _,refs=extract(q.find('generalfeedback'))
-    questions.append(dict(es=es,en=en,opts=opts,correct=correct[0],imgs=imgs,refs=refs))
-if not questions:raise ValueError('No questions found')
+    feedback,refs=extract(q.find('generalfeedback'), preserve_all_text=True)
+    questions.append(dict(es=es,en=en,opts=opts,correct=correct[0],imgs=imgs,refs=refs,feedback_text='\n'.join(feedback)))
+if not 1<=len(questions)<=300:raise ValueError('Expected 1–300 questions')
+if any(len(q['opts'])>26 for q in questions):raise ValueError('Maximum 26 answer options')
 a.output.parent.mkdir(parents=True,exist_ok=True)
 a.output.write_text(json.dumps({str(a.number):questions},ensure_ascii=False),encoding='utf-8');print(f'Test {a.number}: {len(questions)} questions; review private JSON before upload.')

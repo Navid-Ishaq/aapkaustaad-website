@@ -1,0 +1,15 @@
+# AL NOOR Learning Release 3
+
+Upgrade scope: Learning frontend, learning Edge Function, Moodle converter/importer, and a manual graphical Windows Test Manager. Watchdog is deliberately deferred. Existing manual `upload-test.cmd` is unchanged. No schema migration, no database reset, no reimport of existing tests, no changes to Student Chat, chatbot, or public course pages.
+
+## Windows usage
+Double-click `test-manager.cmd` in the main repository. Python 3 with Tkinter, Pillow, BeautifulSoup4, and defusedxml is required. Choose an XML within `D:\DETLENG2\private-learning`. Enter/select the actual course code and collection (they must already exist online), test number, language, minutes, max errors. Convert & review first, then Upload draft. Copy the academy legacy service_role key only when asked; it is not saved to disk or GitHub. Confirm the production draft import in the GUI. Existing test numbers are not overwritten. The optional per-course defaults file contains settings only and is in the private folder. No watchdog or stored secret.
+
+## Behavior
+- Spanish only, English only, or bilingual Spanish then English. Explicit language selection remains necessary: the importer does not guess language from short phrases. All questions/options must contain the selected language(s). Supported Moodle format remains single-correct-answer multichoice, 1–300 questions, 2–26 text options. Optional question and general-feedback images, optional feedback text, and multiple reference images. Unsupported formats are rejected. General feedback text is preserved as plain source text, not automatically translated; language-restricted question/option text remains filtered by server permissions.
+- Practice: Reference available before and after answering; no correct-answer field before first answer. Exam: backend omits Reference data and correct answer until finish. Main image unaffected. A previously viewed practice reference cannot be made unknown to the same student.
+- Font size 14–40px (22px default); browser-local preference; affects question, options, and Reference text. No image column or position toggle when current question has no main image. Existing bottom/right navigator and image positioning retained.
+- Existing tests keep their stored images. Older importer discarded general-feedback text, so missing historical text cannot be reconstructed from the database alone. Recovering it requires the original XML and a separate controlled update; do not overwrite tests just to add text.
+
+## Verification
+155 existing Node tests passed; Python syntax checks; 12 synthetic XML language/feedback cases passed; JavaScript and TypeScript syntax checks; mock browser UI check passed for pre-answer Practice Reference, no-image layout, language controls, font resize, answer feedback, and Exam hiding until finish. No live Supabase writes or Windows GUI execution were performed for this release. Verify with a draft and a test student before publishing. Backend deployment is required in addition to GitHub Pages push; do not apply old migrations again.

@@ -21,7 +21,9 @@ Deno.serve(async req=>{
  };
  const test=async(tid:unknown)=>{const t=await get('tests',tid);const s=await get('sections',t.section_id);const p=await access(s.course_id);requireValue(teacher||t.published,'Test unavailable');return {t,s,p};};
  const images=async(a:string[]=[])=>Promise.all(a.map(async x=>{if(x.startsWith('https://'))return x;const r=checked(await admin.storage.from('alnoor-learning').createSignedUrl(x,3600));return r.signedUrl;}));
- const clean=async(q:any,p:any,reveal=false)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:await images(q.imgs),...(reveal?{correct:q.correct,refs:await images(q.refs)}:{})});
+ const languages=(qs:any[],p:any)=>({es:!!p.es&&qs.every(q=>!!q.es?.trim()&&q.opts.every((o:any)=>!!o[0]?.trim())),en:!!p.en&&qs.every(q=>!!q.en?.trim()&&q.opts.every((o:any)=>!!o[1]?.trim()))});
+ const reference=async(q:any)=>({refs:await images(q.refs),feedback_text:typeof q.feedback_text==='string'?q.feedback_text:''});
+ const clean=async(q:any,p:any,reveal=false,showReference=reveal)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:await images(q.imgs),...(reveal?{correct:q.correct}:{}),...(showReference?await reference(q):{})});
  const touch=async(cid:string,p:any)=>{if(!teacher&&p.user_id)checked(await table('access').update({last_activity:new Date().toISOString()}).eq('user_id',user.id).eq('course_id',cid));};
  if(b.action==='home'){
   const all=checked(await table('courses').select('*').order('name'));const courses=[];for(const x of all){try{await access(x.id);courses.push(x);}catch{}}
@@ -34,20 +36,20 @@ Deno.serve(async req=>{
   return reply({sections,tests,statuses,permissions:{en:p.en,es:p.es}});
  }
  if(b.action==='start'){
-  const {t,s,p}=await test(b.test);requireValue(['exam','practice'].includes(b.mode),'Invalid mode');await touch(s.course_id,p);
+  const {t,s,p:allowed}=await test(b.test);const p=languages(t.questions,allowed);requireValue(p.es||p.en,'No permitted language for this test');requireValue(['exam','practice'].includes(b.mode),'Invalid mode');await touch(s.course_id,p);
   const a=checked(await table('attempts').insert({user_id:user.id,test_id:t.id,mode:b.mode,deadline:b.mode==='exam'&&b.timed===true?new Date(Date.now()+t.minutes*60000).toISOString():null}).select('id,started_at,deadline').single());
-  return reply({attempt:a,questions:t.questions.map((q:any)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:[]})),minutes:t.minutes,max_errors:t.max_errors});
+  return reply({attempt:a,questions:t.questions.map((q:any)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:[]})),minutes:t.minutes,max_errors:t.max_errors,permissions:p});
  }
  if(['answer','finish','review','question'].includes(b.action)){
-  const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id,'Attempt denied');const {t,s,p}=await test(a.test_id);const q=t.questions;
-  if(b.action==='question'){const i=b.index;requireValue(Number.isInteger(i)&&i>=0&&i<q.length,'Invalid question');return reply({question:await clean(q[i],p,!!a.finished_at||a.mode==='practice'&&a.answers[i]!==undefined)});}
+  const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id,'Attempt denied');const {t,s,p:allowed}=await test(a.test_id);const q=t.questions;const p=languages(q,allowed);requireValue(p.es||p.en,'No permitted language for this test');
+  if(b.action==='question'){const i=b.index;requireValue(Number.isInteger(i)&&i>=0&&i<q.length,'Invalid question');return reply({question:await clean(q[i],p,!!a.finished_at||a.mode==='practice'&&a.answers[i]!==undefined,!!a.finished_at||a.mode==='practice')});}
   if(b.action==='review'){requireValue(a.finished_at,'Finish first');return reply({questions:await Promise.all(q.map((x:any)=>clean(x,p,true))),result:a});}
   requireValue(!a.finished_at,'Attempt already finished');
   if(b.action==='answer'){
    requireValue(a.mode==='practice'||!a.deadline||Date.now()<=Date.parse(a.deadline),'Time expired');const i=b.index,v=b.value;requireValue(Number.isInteger(i)&&i>=0&&i<q.length&&Number.isInteger(v)&&v>=0&&v<q[i].opts.length,'Invalid answer');
    requireValue(a.mode!=='practice'||a.answers[i]===undefined,'Practice answer already recorded');
    checked(await table('attempts').update({answers:{...a.answers,[i]:v}}).eq('id',a.id).eq('answers',JSON.stringify(a.answers)).is('finished_at',null).select('id').single());await touch(s.course_id,p);
-   return reply(a.mode==='practice'?{correct:q[i].correct,refs:await images(q[i].refs)}:{ok:true});
+   return reply(a.mode==='practice'?{correct:q[i].correct,...await reference(q[i])}:{ok:true});
   }
   const score=q.filter((x:any,i:number)=>a.answers[i]===x.correct).length;const now=Date.now();const result={score,total:q.length,passed:q.length-score<=t.max_errors,seconds:Math.max(0,Math.floor((Math.min(now,a.deadline?Date.parse(a.deadline):now)-Date.parse(a.started_at))/1000)),finished_at:new Date(now).toISOString()};
   checked(await table('attempts').update(result).eq('id',a.id).eq('answers',JSON.stringify(a.answers)).is('finished_at',null).select('id').single());return reply({result:{...a,...result},questions:await Promise.all(q.map((x:any)=>clean(x,p,true)))});

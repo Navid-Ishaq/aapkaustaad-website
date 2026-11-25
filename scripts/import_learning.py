@@ -24,9 +24,10 @@ course=find('learn_courses',code=a.course);assert len(course)==1,'Create course 
 source=json.loads(a.file.read_text(encoding='utf-8'))
 for number,questions in source.items():
     assert str(number).isdigit() and int(number)>0 and 1<=len(questions)<=300
-    assert 0<=a.max_errors<len(questions)
+    assert 1<=a.minutes<=600 and 0<=a.max_errors<len(questions)
     for q in questions:
         assert isinstance(q['es'],str) and isinstance(q['en'],str) and len(q['opts'])>=2 and all(len(x)==2 and all(isinstance(t,str) for t in x) for x in q['opts']) and type(q['correct']) is int and 0<=q['correct']<len(q['opts'])
+        assert isinstance(q.get('feedback_text',''),str)
     if find('learn_tests',section_id=sid,number=str(number)):
         print(f'Skipping existing Test {number}; no overwrite');continue
     for q in questions:
