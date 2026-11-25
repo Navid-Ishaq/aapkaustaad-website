@@ -25,3 +25,6 @@ verify_jwt = false
 
 [functions.chat-preview]
 verify_jwt = false
+
+[functions.learning]
+verify_jwt = false
