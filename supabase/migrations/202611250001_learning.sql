@@ -1,0 +1,16 @@
+begin;
+create table public.learn_courses(id uuid primary key default gen_random_uuid(), name text not null, code text not null unique, active boolean not null default true);
+create table public.learn_sections(id uuid primary key default gen_random_uuid(), course_id uuid not null references public.learn_courses on delete cascade, name text not null, unique(course_id,name));
+create table public.learn_tests(id uuid primary key default gen_random_uuid(), section_id uuid not null references public.learn_sections on delete cascade, number integer not null check(number>0), name text not null, minutes integer not null default 30 check(minutes between 1 and 600), max_errors integer not null default 3 check(max_errors>=0), published boolean not null default false, questions jsonb not null check(jsonb_typeof(questions)='array' and jsonb_array_length(questions) between 1 and 300), unique(section_id,number));
+create table public.learn_access(user_id uuid references public.chat_profiles on delete cascade, course_id uuid references public.learn_courses on delete cascade, enabled boolean not null default true, en boolean not null default false, es boolean not null default true, last_activity timestamptz not null default now(), primary key(user_id,course_id));
+create table public.learn_groups(class_id uuid references public.chat_classes on delete cascade, course_id uuid references public.learn_courses on delete cascade, en boolean not null default false, es boolean not null default true, primary key(class_id,course_id));
+create table public.learn_attempts(id uuid primary key default gen_random_uuid(), user_id uuid not null references public.chat_profiles on delete cascade, test_id uuid not null references public.learn_tests on delete cascade, mode text not null check(mode in ('practice','exam')), started_at timestamptz not null default now(), deadline timestamptz, finished_at timestamptz, answers jsonb not null default '{}'::jsonb, score integer, total integer, passed boolean, seconds integer);
+create index learn_attempt_history on public.learn_attempts(user_id,test_id,finished_at desc);
+create table public.learn_settings(id boolean primary key default true check(id), inactivity_days integer not null default 5 check(inactivity_days between 1 and 365), auto_block boolean not null default false);
+insert into public.learn_settings default values;
+insert into public.learn_courses(name,code) values('Driving Theory — Permiso B','DRV-B');
+insert into public.learn_sections(course_id,name) select id,'General Tests' from public.learn_courses where code='DRV-B';
+do $$ declare t text; begin foreach t in array array['learn_courses','learn_sections','learn_tests','learn_access','learn_groups','learn_attempts','learn_settings'] loop execute format('alter table public.%I enable row level security',t); execute format('revoke all on public.%I from public,anon,authenticated',t); execute format('grant all on public.%I to service_role',t); end loop; end $$;
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('alnoor-learning','alnoor-learning',false,5242880,array['image/jpeg','image/png','image/webp']);
+notify pgrst,'reload schema';
+commit;

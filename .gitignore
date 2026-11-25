@@ -5,3 +5,12 @@ node_modules/
 supabase/.temp/
 supabase/.branches/
 *.log
+
+# Private learning material and local credentials (public GitHub repository)
+private-learning/
+*.xml
+learning-seed*.zip
+learning-history*.csv
+tests-34-51.json
+__pycache__/
+*.pyc
