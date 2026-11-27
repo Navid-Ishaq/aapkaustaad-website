@@ -74,6 +74,24 @@ Deno.serve(async req=>{
   checked(await table('attempts').update(result).eq('id',a.id).eq('answers',JSON.stringify(a.answers)).is('finished_at',null).select('id').single());return reply({result:{...a,...result},questions:await Promise.all(q.map((x:any)=>clean(x,p,true)))});
  }
  requireValue(teacher,'Administrator required');
+ // Export reads only latest test content, with fresh signed URLs; no student records.
+ if(b.action==='export-courses')return reply({courses:checked(await table('courses').select('id,name,code,active').order('name'))});
+ if(b.action==='export-sections'){
+  const course=await get('courses',b.course);
+  return reply({course,sections:checked(await table('sections').select('id,name,course_id').eq('course_id',course.id).order('name').order('id'))});
+ }
+ if(b.action==='export-tests'){
+  const section=await get('sections',b.section);
+  const page=b.page??0;requireValue(Number.isSafeInteger(page)&&page>=0&&page<=100000,'Invalid page');
+  const tests=checked(await table('tests').select('id,number,name,published,revision').eq('section_id',section.id).order('number').order('id').range(page*100,page*100+99));
+  return reply({tests,more:tests.length===100});
+ }
+ if(b.action==='export-test'){
+  const t=await get('tests',b.test);const section=await get('sections',t.section_id);const course=await get('courses',section.course_id);
+  const questions=await batchQuestions(t.questions,{es:true,en:true},{finished_at:true,mode:'practice',answers:{}});
+  return reply({course,section,test:{id:t.id,number:t.number,name:t.name,minutes:t.minutes,max_errors:t.max_errors,published:t.published,revision:t.revision},questions});
+ }
+
  if(b.action==='editor-upload'){
   requireValue(typeof b.image==='string'&&b.image.length<=2800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(b.image),'Invalid image');
   const bytes=Uint8Array.from(atob(b.image),x=>x.charCodeAt(0));
