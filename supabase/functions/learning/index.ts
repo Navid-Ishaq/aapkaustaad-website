@@ -54,8 +54,12 @@ Deno.serve(async req=>{
   const a=checked(await table('attempts').insert({user_id:user.id,test_id:t.id,test_revision:t.revision,mode:b.mode,deadline:b.mode==='exam'&&b.timed===true?new Date(Date.now()+t.minutes*60000).toISOString():null}).select('id,started_at,deadline').single());
   return reply({attempt:a,questions:t.questions.map((q:any)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:[]})),minutes:t.minutes,max_errors:t.max_errors,permissions:p});
  }
- if(['answer','finish','review','question','questions-batch'].includes(b.action)){
+ if(['answer','finish','review','question','questions-batch','resume'].includes(b.action)){
   const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id,'Attempt denied');const {t,s,p:allowed}=await test(a.test_id);const version=a.test_revision??1;const saved=version!==(t.revision??1)?checked(await table('test_revisions').select('questions,max_errors').eq('test_id',t.id).eq('revision',version).single()):t;const q=saved.questions;const p=languages(q,allowed);requireValue(p.es||p.en,'No permitted language for this test');
+  if(b.action==='resume'){
+   const course=await get('courses',s.course_id);
+   return reply({attempt:{id:a.id,started_at:a.started_at,deadline:a.deadline},mode:a.mode,answers:a.answers,permissions:p,course:{id:course.id,name:course.name},test:{id:t.id,name:t.name,minutes:t.minutes,max_errors:saved.max_errors},questions:await batchQuestions(q,p,a),result:a.finished_at?{score:a.score,total:a.total,passed:a.passed,seconds:a.seconds}:null});
+  }
   if(b.action==='questions-batch')return reply({questions:await batchQuestions(q,p,a),permissions:p,finished:!!a.finished_at});
   if(b.action==='question'){const i=b.index;requireValue(Number.isInteger(i)&&i>=0&&i<q.length,'Invalid question');return reply({question:await clean(q[i],p,!!a.finished_at||a.mode==='practice'&&a.answers[i]!==undefined,!!a.finished_at||a.mode==='practice'),permissions:p});}
   if(b.action==='review'){requireValue(a.finished_at,'Finish first');return reply({questions:await Promise.all(q.map((x:any)=>clean(x,p,true))),result:a});}
