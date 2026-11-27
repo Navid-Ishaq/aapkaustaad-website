@@ -67,6 +67,21 @@ Deno.serve(async req=>{
   const seen=new Set<string>();const rows=b.changes.map((change:any)=>{const cid=id(change.course);const course=courses.find((x:any)=>x.id===cid);requireValue(!!course&&!seen.has(cid),'Invalid or duplicate course');seen.add(cid);requireValue(typeof change.enabled==='boolean'&&typeof change.en==='boolean'&&typeof change.es==='boolean','Invalid permissions');requireValue(!change.enabled||(course.active&&(change.en||change.es)),'Active course and language required');const old=direct.find((x:any)=>x.course_id===cid);return {user_id:sid,course_id:cid,enabled:change.enabled,en:change.en,es:change.es,last_activity:old?.last_activity??new Date().toISOString()};});
   checked(await table('access').upsert(rows,{onConflict:'user_id,course_id'}));return reply({ok:true});
  }
+ if(b.action==='student-search'){
+  const cid=id(b.course);await get('courses',cid);
+  requireValue(b.search===undefined||typeof b.search==='string','Invalid search');
+  const search=(b.search??'').trim();requireValue(search.length<=150,'Search too long');
+  const requested=Number.isSafeInteger(b.page)?Math.max(0,b.page):0;
+  // PostgREST treats * as a wildcard alias; names cannot be searched with that alias.
+  if(search.includes('*'))return reply({students:[],access:[],total:0,page:0});
+  const pattern='%'+search.replace(/[\\%_]/g,(c:string)=>'\\'+c)+'%';
+  const query=()=>{let q=admin.from('chat_profiles').select('id,display_name,active',{count:'exact'}).eq('role','student');if(search)q=q.ilike('display_name',pattern);return q.order('display_name').order('id');};
+  const first=await query().range(0,0);checked(first);const total=first.count??0;
+  const page=Math.min(requested,Math.max(0,Math.ceil(total/25)-1));
+  const students=total?checked(await query().range(page*25,page*25+24)):[];
+  const access=students.length?checked(await table('access').select('user_id,course_id,last_activity').eq('course_id',cid).in('user_id',students.map((x:any)=>x.id))):[];
+  return reply({students,access,total,page});
+ }
  if(b.action==='admin'){
   const page=Math.max(0,Math.min(10000,Number(b.page)||0));return reply({courses:checked(await table('courses').select('*').order('name')),sections:checked(await table('sections').select('*')),students:checked(await admin.from('chat_profiles').select('id,display_name,active').eq('role','student').order('display_name').range(page*25,page*25+24)),classes:checked(await admin.from('chat_classes').select('id,name,archived').eq('archived',false)),access:checked(await table('access').select('*').range(0,999)),groups:checked(await table('groups').select('*')),settings:checked(await table('settings').select('*').single()),owner:checked(await admin.rpc('chat_owner_id'))===user.id});
  }
