@@ -1,10 +1,10 @@
 import {context,checked,requireValue,uuid} from '../_shared/security.ts';
 Deno.serve(async req=>{
- const c=await context(req,65536);if(c.early)return c.early;
+ const c=await context(req,3000000);if(c.early)return c.early;
  const {admin,user,profile,reply}=c; const teacher=profile.role==='admin';
  if(profile.must_change_password)return reply({error:'Change password first'},403);
  try{
- const raw=await req.text();requireValue(raw.length<=65536,'Request too large');const b=JSON.parse(raw);
+ const raw=await req.text();requireValue(raw.length<=3000000,'Request too large');const b=JSON.parse(raw);requireValue(raw.length<=65536||b.action==='editor-upload'&&teacher,'Request too large');
  const table=(n:string)=>admin.from('learn_'+n);
  const id=(v:unknown)=>{requireValue(uuid(v),'Invalid ID');return v as string;};
  const get=async(n:string,v:unknown)=>checked(await table(n).select('*').eq('id',id(v)).single());
@@ -51,11 +51,11 @@ Deno.serve(async req=>{
  }
  if(b.action==='start'){
   const {t,s,p:allowed}=await test(b.test);const p=languages(t.questions,allowed);requireValue(p.es||p.en,'No permitted language for this test');requireValue(['exam','practice'].includes(b.mode),'Invalid mode');await touch(s.course_id,p);
-  const a=checked(await table('attempts').insert({user_id:user.id,test_id:t.id,mode:b.mode,deadline:b.mode==='exam'&&b.timed===true?new Date(Date.now()+t.minutes*60000).toISOString():null}).select('id,started_at,deadline').single());
+  const a=checked(await table('attempts').insert({user_id:user.id,test_id:t.id,test_revision:t.revision,mode:b.mode,deadline:b.mode==='exam'&&b.timed===true?new Date(Date.now()+t.minutes*60000).toISOString():null}).select('id,started_at,deadline').single());
   return reply({attempt:a,questions:t.questions.map((q:any)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:[]})),minutes:t.minutes,max_errors:t.max_errors,permissions:p});
  }
  if(['answer','finish','review','question','questions-batch'].includes(b.action)){
-  const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id,'Attempt denied');const {t,s,p:allowed}=await test(a.test_id);const q=t.questions;const p=languages(q,allowed);requireValue(p.es||p.en,'No permitted language for this test');
+  const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id,'Attempt denied');const {t,s,p:allowed}=await test(a.test_id);const version=a.test_revision??1;const saved=version!==(t.revision??1)?checked(await table('test_revisions').select('questions,max_errors').eq('test_id',t.id).eq('revision',version).single()):t;const q=saved.questions;const p=languages(q,allowed);requireValue(p.es||p.en,'No permitted language for this test');
   if(b.action==='questions-batch')return reply({questions:await batchQuestions(q,p,a),permissions:p,finished:!!a.finished_at});
   if(b.action==='question'){const i=b.index;requireValue(Number.isInteger(i)&&i>=0&&i<q.length,'Invalid question');return reply({question:await clean(q[i],p,!!a.finished_at||a.mode==='practice'&&a.answers[i]!==undefined,!!a.finished_at||a.mode==='practice'),permissions:p});}
   if(b.action==='review'){requireValue(a.finished_at,'Finish first');return reply({questions:await Promise.all(q.map((x:any)=>clean(x,p,true))),result:a});}
@@ -66,10 +66,52 @@ Deno.serve(async req=>{
    checked(await table('attempts').update({answers:{...a.answers,[i]:v}}).eq('id',a.id).eq('answers',JSON.stringify(a.answers)).is('finished_at',null).select('id').single());await touch(s.course_id,p);
    return reply(a.mode==='practice'?{correct:q[i].correct,...await reference(q[i])}:{ok:true});
   }
-  const score=q.filter((x:any,i:number)=>a.answers[i]===x.correct).length;const now=Date.now();const result={score,total:q.length,passed:q.length-score<=t.max_errors,seconds:Math.max(0,Math.floor((Math.min(now,a.deadline?Date.parse(a.deadline):now)-Date.parse(a.started_at))/1000)),finished_at:new Date(now).toISOString()};
+  const score=q.filter((x:any,i:number)=>a.answers[i]===x.correct).length;const now=Date.now();const result={score,total:q.length,passed:q.length-score<=saved.max_errors,seconds:Math.max(0,Math.floor((Math.min(now,a.deadline?Date.parse(a.deadline):now)-Date.parse(a.started_at))/1000)),finished_at:new Date(now).toISOString()};
   checked(await table('attempts').update(result).eq('id',a.id).eq('answers',JSON.stringify(a.answers)).is('finished_at',null).select('id').single());return reply({result:{...a,...result},questions:await Promise.all(q.map((x:any)=>clean(x,p,true)))});
  }
  requireValue(teacher,'Administrator required');
+ if(b.action==='editor-upload'){
+  requireValue(typeof b.image==='string'&&b.image.length<=2800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(b.image),'Invalid image');
+  const bytes=Uint8Array.from(atob(b.image),x=>x.charCodeAt(0));
+  requireValue(bytes.length>=4&&bytes.length<=2097152&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255&&bytes[bytes.length-2]===255&&bytes[bytes.length-1]===217,'JPEG required');
+  const path=`editor/${user.id}/${crypto.randomUUID()}.jpg`;
+  checked(await admin.storage.from('alnoor-learning').upload(path,bytes,{contentType:'image/jpeg',upsert:false}));
+  return reply({path,url:(await images([path]))[0]});
+ }
+ if(['editor-load','editor-save','editor-restore'].includes(b.action)){
+  const t=await get('tests',b.test);const i=b.index;
+  requireValue(Number.isInteger(i)&&i>=0&&i<t.questions.length,'Invalid question');
+  const current=t.questions[i];
+  if(b.action==='editor-load'){
+   const history=checked(await table('test_revisions').select('revision,archived_at').eq('test_id',t.id).order('revision',{ascending:false}).limit(100));
+   const s=await get('sections',t.section_id);
+   return reply({test:{id:t.id,name:t.name,course:s.course_id,section:t.section_id,total:t.questions.length,revision:t.revision},question:current,previews:{imgs:await images(current.imgs),refs:await images(current.refs)},history});
+  }
+  if(b.revision!==t.revision)return reply({error:'This test was edited elsewhere. Reload before saving.'},409);
+  let next:any;
+  if(b.action==='editor-restore'){
+   requireValue(Number.isInteger(b.restore)&&b.restore>0&&b.restore<t.revision,'Invalid revision');
+   const old=checked(await table('test_revisions').select('questions').eq('test_id',t.id).eq('revision',b.restore).single());
+   requireValue(!!old.questions[i],'Question unavailable in that revision');next=old.questions[i];
+  }else{
+   const v=b.question;requireValue(v&&typeof v==='object','Invalid question');
+   const str=(x:any,n:number)=>{requireValue(typeof x==='string'&&x.length<=n,'Invalid text length');return x.trim();};
+   const es=str(v.es,12000),en=str(v.en,12000);requireValue(es||en,'Question text required');
+   requireValue(Array.isArray(v.opts)&&v.opts.length>=2&&v.opts.length<=26,'2–26 options required');
+   const opts=v.opts.map((o:any)=>{requireValue(Array.isArray(o)&&o.length===2,'Invalid option');const pair=[str(o[0],6000),str(o[1],6000)];requireValue((!es||pair[0])&&(!en||pair[1])&&(es||!pair[0])&&(en||!pair[1]),'Complete every option in each question language');return pair;});
+   requireValue(Number.isInteger(v.correct)&&v.correct>=0&&v.correct<opts.length,'Select correct answer');
+   const paths=(list:any,old:string[]=[])=>{requireValue(Array.isArray(list)&&list.length<=Math.max(20,old.length),'Invalid images');return list.map((x:any)=>{requireValue(typeof x==='string'&&(old.includes(x)||(x.startsWith(`editor/${user.id}/`)&&/^[0-9a-f-]{36}\.jpg$/.test(x.split('/').pop()))),'Invalid image path');return x;});};
+   next={es,en,opts,correct:v.correct,imgs:paths(v.imgs,current.imgs),refs:paths(v.refs,current.refs),feedback_text:str(v.feedback_text??'',20000)};
+  }
+  const qs=t.questions.slice();qs[i]=next;
+  const has=languages(qs,{es:true,en:true});requireValue(has.es||has.en,'All questions must share at least one complete language');
+  // Preserve existing test-wide languages: changing one question must not silently disable a language.
+  const before=languages(t.questions,{es:true,en:true});requireValue((!before.es||has.es)&&(!before.en||has.en),'Cannot remove a test language by editing one question');
+  const updated=await table('tests').update({questions:qs,edited_by:user.id}).eq('id',t.id).eq('revision',b.revision).select('revision').maybeSingle();
+  if(updated.error)throw updated.error;if(!updated.data)return reply({error:'Concurrent edit detected. Reload before saving.'},409);
+  return reply({ok:true,revision:updated.data.revision});
+ }
+
  if(b.action==='student-courses'||b.action==='student-courses-save'){
   const sid=id(b.student);const student=checked(await admin.from('chat_profiles').select('role').eq('id',sid).single());requireValue(student.role==='student','Student required');
   const courses=checked(await table('courses').select('id,name,code,active').order('name'));
