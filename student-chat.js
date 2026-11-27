@@ -1,8 +1,8 @@
-import {setupChatView} from './student-chat-view.js';
+import {setupChatView} from './student-chat-view.js?v=3.2';
 import { setupComposer, firstLink } from './student-chat-composer.js';
 import { createLinkPreviews } from './student-chat-links.js';
 let linkPreviews;
-import { setupAdminNavigation } from './student-chat-navigation.js';
+import { setupAdminNavigation } from './student-chat-navigation.js?v=3.2';
 import { createMediaTools } from './student-chat-media.js';
 let mediaTools;
 import { createAdminTools } from './student-chat-admin.js';

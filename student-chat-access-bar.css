@@ -1,0 +1,24 @@
+/* Student Chat only — persistent account navigation, no auth or messaging changes. */
+body.sc-page{overflow-x:clip}
+#student-chat:has(#account-actions:not([hidden])) .sc-heading{position:sticky;top:calc(var(--sc-header-bottom,94px) + 6px);z-index:950;overflow:visible;background:#fff;color:#193a55;padding:10px 15px;border:1px solid #d5e4ee;border-radius:12px;box-shadow:0 5px 18px #173b761c;margin-bottom:10px}
+#student-chat:has(#account-actions:not([hidden])) .sc-heading h1{color:#193a55!important;font-size:19px!important;margin:0!important}
+#student-chat:has(#account-actions:not([hidden])) .sc-heading .sc-eyebrow,#student-chat:has(#account-actions:not([hidden])) .sc-heading p{display:none}
+#student-chat .sc-learning-link{display:inline-flex;align-items:center;gap:10px;padding:10px 15px;min-height:48px;border-radius:10px;border:1px solid #07645e;background:linear-gradient(115deg,#08736d,#08605b);color:#fff!important;text-decoration:none!important;font:700 15px/1.2 Inter,"Segoe UI",Arial,sans-serif;box-shadow:0 3px 10px #08736d30;white-space:nowrap}
+#student-chat .sc-learning-link svg{width:24px;height:24px;flex:none}
+#student-chat .sc-learning-link small{display:block;font-size:11px;font-weight:500;color:#e0f7f3;margin-top:3px}
+#student-chat .sc-learning-link:hover{background:#064d49;box-shadow:0 4px 14px #08736d45}
+#student-chat .sc-learning-link:focus-visible{outline:3px solid #0b8278!important;outline-offset:3px}
+#student-chat #admin-shortcuts{top:var(--sc-access-bottom,162px)}
+#student-chat .sc-heading-extras #account-actions{gap:8px}
+@media(max-width:760px){
+ #student-chat:has(#account-actions:not([hidden])) .sc-heading{padding:8px 10px;gap:8px}
+ #student-chat:has(#account-actions:not([hidden])) .sc-heading h1{font-size:16px!important}
+ #student-chat .sc-heading-extras{width:100%;gap:6px;justify-content:flex-start}
+ #student-chat .sc-heading-extras #account-actions{width:100%;gap:6px}
+ #student-chat .sc-learning-link{order:-1;min-height:44px;padding:7px 10px;font-size:13px;flex:1;justify-content:center}
+ #student-chat .sc-learning-link svg{width:20px;height:20px}
+ #student-chat .sc-learning-link small{font-size:10px}
+ #student-chat .sc-heading-extras .sc-how-built-link{min-height:32px}
+}
+@media(max-width:380px){#student-chat .sc-learning-link{flex-basis:100%}}
+@media(max-height:440px){#student-chat:has(#account-actions:not([hidden])) .sc-heading{position:relative;top:auto}#student-chat #admin-shortcuts{top:var(--sc-header-bottom,94px)}}
