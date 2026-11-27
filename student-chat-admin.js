@@ -1,3 +1,4 @@
+import {coursePicker} from './student-chat-courses.js?v=3.3';
 // All account reads/changes go through the authenticated, server-authorized Edge Function.
 export function createAdminTools({edge,getClasses,status,element,button}) {
  const $=id=>document.getElementById(id);
@@ -16,7 +17,7 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
  const runChange=async fn=>{try{await fn();}catch(e){status(e.message||'Change failed',true);throw e;}};
  function closePopovers(){document.querySelectorAll('.sc-class-popover:popover-open').forEach(p=>p.hidePopover());}
  $('media-collect').onclick=async()=>{if(!isOwner)return;const button=$('media-collect');button.disabled=true;try{const result=await edge('chat-media',{action:'collect'});status(result.ok?'Unused media file cleanup complete.':'Some files are still queued. Please retry cleanup shortly.');}catch(e){status(e.message,true);}finally{button.disabled=false;}};
- function reset(){version++;isOwner=false;closePopovers();document.querySelectorAll('.sc-class-popover').forEach(p=>p.remove());$('admin-students').replaceChildren();$('admin-teachers').replaceChildren();$('owner-panel').hidden=true;dialog.close();deleteDialog.close();$('account-edit-form').reset();edit=null;deletion=null;}
+ function reset(){document.querySelectorAll('.sc-course-dialog').forEach(d=>{d.close();d.remove();});version++;isOwner=false;closePopovers();document.querySelectorAll('.sc-class-popover').forEach(p=>p.remove());$('admin-students').replaceChildren();$('admin-teachers').replaceChildren();$('owner-panel').hidden=true;dialog.close();deleteDialog.close();$('account-edit-form').reset();edit=null;deletion=null;}
  function openEditor(p,kind){
   edit={p,kind};$('account-edit-form').reset();$('edit-error').textContent='';$('edit-title').textContent=(kind==='password'?'Reset password':kind==='email'?'Change email':'Edit name')+' · '+p.display_name;
   $('edit-value-label').textContent=kind==='password'?'New temporary password':kind==='email'?'Email address':'Display name';
@@ -61,16 +62,16 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
  }
  function renderAccounts(container,accounts,memberships,kind,hasMore,page){
   if(kind==='students'){closePopovers();document.querySelectorAll('.sc-class-popover').forEach(p=>p.remove());}
-  container.replaceChildren();const table=element('table',undefined,'sc-account-table');table.setAttribute('aria-label',kind==='teachers'?'Teacher Admin accounts':'Student accounts');const head=element('thead'),hr=element('tr');
-  for(const title of ['Name','Email','Password',kind==='teachers'?'Role':'Classes',kind==='teachers'?'Admin access':'Chat access','Actions'])hr.append(element('th',title));head.append(hr);const body=element('tbody');
+  container.replaceChildren();const table=element('table',undefined,'sc-account-table'+(kind==='students'?' sc-course-table':''));table.setAttribute('aria-label',kind==='teachers'?'Teacher Admin accounts':'Student accounts');const head=element('thead'),hr=element('tr');
+  for(const title of ['Name','Email','Password',kind==='teachers'?'Role':'Classes',...(kind==='students'?['Courses']:[]),kind==='teachers'?'Admin access':'Chat access','Actions'])hr.append(element('th',title));head.append(hr);const body=element('tbody');
   for(const p of accounts){const row=element('tr');row.dataset.accountId=p.id;
    const name=element('td'),email=element('td'),password=element('td'),classes=element('td'),access=element('td');
    if(p.is_owner){name.append(element('strong',p.display_name));email.append(element('span',p.email));password.append(element('span','Use Change password','sc-muted'));classes.append(element('span','Owner','sc-owner-badge'));access.append(element('span','Protected','sc-enabled'));}
    else{name.append(button(p.display_name,()=>openEditor(p,'name'),'sc-text-edit'));email.append(button(p.email||'Set email',()=>openEditor(p,'email'),'sc-text-edit'));password.append(button('Reset password',()=>openEditor(p,'password'),'sc-small-button'));classes.append(kind==='teachers'?element('span','Teacher Admin','sc-muted'):classPicker(p,memberships));access.append(accessControl(p));}
    const actions=element('td');if(p.is_owner)actions.append(element('span','—','sc-muted'));else{const menu=element('select');menu.className='sc-account-actions';menu.setAttribute('aria-label','Actions for '+p.display_name);const placeholder=element('option','Actions ▾');placeholder.value='';const remove=element('option','Delete account…');remove.value='delete';menu.append(placeholder,remove);menu.onchange=()=>{if(menu.value==='delete')openDeletion({kind:'account',p});menu.value='';};actions.append(menu);}
-   row.append(name,email,password,classes,access,actions);body.append(row);
+   row.append(name,email,password,classes);if(kind==='students'){const courses=element('td');courses.append(coursePicker(p,{edge,status,element}));row.append(courses);}row.append(access,actions);body.append(row);
   }
-  if(!accounts.length){const row=element('tr'),cell=element('td','No '+(kind==='teachers'?'Teacher Admins':'students')+' on this page.');cell.colSpan=6;row.append(cell);body.append(row);}
+  if(!accounts.length){const row=element('tr'),cell=element('td','No '+(kind==='teachers'?'Teacher Admins':'students')+' on this page.');cell.colSpan=kind==='students'?7:6;row.append(cell);body.append(row);}
   table.append(head,body);const scroll=element('div',undefined,'sc-table-scroll');scroll.append(table);container.append(scroll);
   const pager=element('div',undefined,'sc-pager');const prev=button('Previous',async()=>{if(kind==='students')studentPage--;else teacherPage--;await load();});prev.disabled=page===0;const next=button('Next',async()=>{if(kind==='students')studentPage++;else teacherPage++;await load();});next.disabled=!hasMore;pager.append(prev,element('span','Page '+(page+1),'sc-muted'),next);container.append(pager);
  }

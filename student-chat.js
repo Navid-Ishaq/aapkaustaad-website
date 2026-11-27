@@ -5,7 +5,7 @@ let linkPreviews;
 import { setupAdminNavigation } from './student-chat-navigation.js?v=3.2';
 import { createMediaTools } from './student-chat-media.js';
 let mediaTools;
-import { createAdminTools } from './student-chat-admin.js';
+import { createAdminTools } from './student-chat-admin.js?v=3.3';
 let adminTools;
 import { chatConfig } from './student-chat-config.js';
 const $=id=>document.getElementById(id);

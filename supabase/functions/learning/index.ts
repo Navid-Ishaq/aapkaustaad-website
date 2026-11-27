@@ -55,6 +55,18 @@ Deno.serve(async req=>{
   checked(await table('attempts').update(result).eq('id',a.id).eq('answers',JSON.stringify(a.answers)).is('finished_at',null).select('id').single());return reply({result:{...a,...result},questions:await Promise.all(q.map((x:any)=>clean(x,p,true)))});
  }
  requireValue(teacher,'Administrator required');
+ if(b.action==='student-courses'||b.action==='student-courses-save'){
+  const sid=id(b.student);const student=checked(await admin.from('chat_profiles').select('role').eq('id',sid).single());requireValue(student.role==='student','Student required');
+  const courses=checked(await table('courses').select('id,name,code,active').order('name'));
+  const direct=checked(await table('access').select('*').eq('user_id',sid));
+  const memberships=checked(await admin.from('chat_memberships').select('class_id,chat_classes!inner(archived)').eq('user_id',sid).eq('chat_classes.archived',false));
+  const groups=memberships.length?checked(await table('groups').select('course_id,en,es').in('class_id',memberships.map((m:any)=>m.class_id))):[];
+  const snapshot=()=>courses.map((course:any)=>{const a=direct.find((x:any)=>x.course_id===course.id);const g=groups.filter((x:any)=>x.course_id===course.id);const en=a?!!a.en:g.some((x:any)=>x.en),es=a?!!a.es:g.some((x:any)=>x.es);return {...course,enabled:!!course.active&&(a?!!a.enabled:true)&&(en||es),en,es,source:a?'Individual':(en||es?'Group':'Not assigned')};});
+  if(b.action==='student-courses')return reply({courses:snapshot()});
+  requireValue(Array.isArray(b.changes)&&b.changes.length>0&&b.changes.length<=100,'Invalid course changes');
+  const seen=new Set<string>();const rows=b.changes.map((change:any)=>{const cid=id(change.course);const course=courses.find((x:any)=>x.id===cid);requireValue(!!course&&!seen.has(cid),'Invalid or duplicate course');seen.add(cid);requireValue(typeof change.enabled==='boolean'&&typeof change.en==='boolean'&&typeof change.es==='boolean','Invalid permissions');requireValue(!change.enabled||(course.active&&(change.en||change.es)),'Active course and language required');const old=direct.find((x:any)=>x.course_id===cid);return {user_id:sid,course_id:cid,enabled:change.enabled,en:change.en,es:change.es,last_activity:old?.last_activity??new Date().toISOString()};});
+  checked(await table('access').upsert(rows,{onConflict:'user_id,course_id'}));return reply({ok:true});
+ }
  if(b.action==='admin'){
   const page=Math.max(0,Math.min(10000,Number(b.page)||0));return reply({courses:checked(await table('courses').select('*').order('name')),sections:checked(await table('sections').select('*')),students:checked(await admin.from('chat_profiles').select('id,display_name,active').eq('role','student').order('display_name').range(page*25,page*25+24)),classes:checked(await admin.from('chat_classes').select('id,name,archived').eq('archived',false)),access:checked(await table('access').select('*').range(0,999)),groups:checked(await table('groups').select('*')),settings:checked(await table('settings').select('*').single()),owner:checked(await admin.rpc('chat_owner_id'))===user.id});
  }
