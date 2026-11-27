@@ -22,8 +22,22 @@ Deno.serve(async req=>{
  const test=async(tid:unknown)=>{const t=await get('tests',tid);const s=await get('sections',t.section_id);const p=await access(s.course_id);requireValue(teacher||t.published,'Test unavailable');return {t,s,p};};
  const images=async(a:string[]=[])=>Promise.all(a.map(async x=>{if(x.startsWith('https://'))return x;const r=checked(await admin.storage.from('alnoor-learning').createSignedUrl(x,3600));return r.signedUrl;}));
  const languages=(qs:any[],p:any)=>({es:!!p.es&&qs.every(q=>!!q.es?.trim()&&q.opts.every((o:any)=>!!o[0]?.trim())),en:!!p.en&&qs.every(q=>!!q.en?.trim()&&q.opts.every((o:any)=>!!o[1]?.trim()))});
- const reference=async(q:any)=>({refs:await images(q.refs),feedback_text:typeof q.feedback_text==='string'?q.feedback_text:''});
- const clean=async(q:any,p:any,reveal=false,showReference=reveal)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:await images(q.imgs),...(reveal?{correct:q.correct}:{}),...(showReference?await reference(q):{})});
+ const reference=async(q:any,sign=images)=>({refs:await sign(q.refs),feedback_text:typeof q.feedback_text==='string'?q.feedback_text:''});
+ const clean=async(q:any,p:any,reveal=false,showReference=reveal,sign=images)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:await sign(q.imgs),...(reveal?{correct:q.correct}:{}),...(showReference?await reference(q,sign):{})});
+ // Batch signing avoids a separate storage request for each image; URLs remain private and expire.
+ const batchQuestions=async(qs:any[],p:any,a:any)=>{
+  const showReference=!!a.finished_at||a.mode==='practice';
+  const paths=[...new Set<string>(qs.flatMap((q:any)=>[...(q.imgs??[]),...(showReference?(q.refs??[]):[])]).filter((x:string)=>!x.startsWith('https://')))];
+  const signed=new Map<string,string>();
+  for(let i=0;i<paths.length;i+=100){
+   const part=paths.slice(i,i+100);
+   const rows=checked(await admin.storage.from('alnoor-learning').createSignedUrls(part,3600));
+   for(const row of rows){requireValue(!row.error&&typeof row.path==='string'&&typeof row.signedUrl==='string'&&!!row.signedUrl,'Image signing failed');signed.set(row.path,row.signedUrl);}
+   requireValue(part.every(x=>signed.has(x)),'Missing signed image');
+  }
+  const sign=async(paths:string[]=[])=>paths.map(x=>{if(x.startsWith('https://'))return x;const url=signed.get(x);if(!url)throw new Error('Missing signed image');return url;});
+  return Promise.all(qs.map((q:any,i:number)=>clean(q,p,!!a.finished_at||a.mode==='practice'&&a.answers[i]!==undefined,showReference,sign)));
+ };
  const touch=async(cid:string,p:any)=>{if(!teacher&&p.user_id)checked(await table('access').update({last_activity:new Date().toISOString()}).eq('user_id',user.id).eq('course_id',cid));};
  if(b.action==='home'){
   const all=checked(await table('courses').select('*').order('name'));const courses=[];for(const x of all){try{await access(x.id);courses.push(x);}catch{}}
@@ -40,9 +54,10 @@ Deno.serve(async req=>{
   const a=checked(await table('attempts').insert({user_id:user.id,test_id:t.id,mode:b.mode,deadline:b.mode==='exam'&&b.timed===true?new Date(Date.now()+t.minutes*60000).toISOString():null}).select('id,started_at,deadline').single());
   return reply({attempt:a,questions:t.questions.map((q:any)=>({es:p.es?q.es:'',en:p.en?q.en:'',opts:q.opts.map((o:any)=>[p.es?o[0]:'',p.en?o[1]:'']),imgs:[]})),minutes:t.minutes,max_errors:t.max_errors,permissions:p});
  }
- if(['answer','finish','review','question'].includes(b.action)){
+ if(['answer','finish','review','question','questions-batch'].includes(b.action)){
   const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id,'Attempt denied');const {t,s,p:allowed}=await test(a.test_id);const q=t.questions;const p=languages(q,allowed);requireValue(p.es||p.en,'No permitted language for this test');
-  if(b.action==='question'){const i=b.index;requireValue(Number.isInteger(i)&&i>=0&&i<q.length,'Invalid question');return reply({question:await clean(q[i],p,!!a.finished_at||a.mode==='practice'&&a.answers[i]!==undefined,!!a.finished_at||a.mode==='practice')});}
+  if(b.action==='questions-batch')return reply({questions:await batchQuestions(q,p,a),permissions:p,finished:!!a.finished_at});
+  if(b.action==='question'){const i=b.index;requireValue(Number.isInteger(i)&&i>=0&&i<q.length,'Invalid question');return reply({question:await clean(q[i],p,!!a.finished_at||a.mode==='practice'&&a.answers[i]!==undefined,!!a.finished_at||a.mode==='practice'),permissions:p});}
   if(b.action==='review'){requireValue(a.finished_at,'Finish first');return reply({questions:await Promise.all(q.map((x:any)=>clean(x,p,true))),result:a});}
   requireValue(!a.finished_at,'Attempt already finished');
   if(b.action==='answer'){

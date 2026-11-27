@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {stripTypeScriptTypes} from 'node:module';
+import vm from 'node:vm';
+const edge=readFileSync(new URL('../supabase/functions/learning/index.ts',import.meta.url),'utf8').replace(/^import .*\n/,'');
+const js=stripTypeScriptTypes(edge);
+const src=readFileSync(new URL('../learning/app.js',import.meta.url),'utf8');
+const ui=src.slice(src.indexOf('function verifyAttemptLanguages'),src.indexOf('function clock()'));
+function harness({mode='exam',finished=false,owner=true,enabled=true,active=true,published=true,en=true,es=false,signError=false,count=30}={}){
+ const qs=Array.from({length:count},(_,i)=>({es:'Pregunta',en:'Question',opts:[['Si','Yes'],['No','No']],correct:0,imgs:[`q${i}.jpg`],refs:['ref.jpg'],feedback_text:'secret'}));
+ const data={learn_attempts:{id:'attempt',user_id:owner?'user':'other',test_id:'test',mode,finished_at:finished?'today':null,answers:{0:0}},learn_tests:{id:'test',section_id:'section',published,questions:qs},learn_sections:{id:'section',course_id:'course'},learn_courses:{id:'course',active},learn_access:{enabled,en,es}};
+ let handler;const calls=[];const admin={from(n){const q={select(){return q},eq(){return q},single(){return Promise.resolve({data:data[n]})},maybeSingle(){return q.single()}};return q},storage:{from(){return {async createSignedUrls(paths){calls.push(paths);return {data:paths.map(path=>({path,signedUrl:'https://signed/'+path,error:signError?'fail':null}))}}}}}};
+ const ctx={Deno:{serve:f=>handler=f},context:async()=>({admin,user:{id:'user'},profile:{role:'student'},reply:(body,status=200)=>({body,status})}),checked:r=>{if(r.error)throw Error(r.error);return r.data},requireValue:(v,m)=>{if(!v)throw Error(m)},uuid:v=>typeof v==='string',console:{error(){}}};vm.runInNewContext(js,ctx);
+ return {calls,request:()=>handler({text:async()=>JSON.stringify({action:'questions-batch',attempt:'attempt'})})};
+}
+test('exam batch: one signing request, 30 questions, no answers or references or unauthorized language',async()=>{const h=harness();const r=await h.request();assert.equal(r.status,200);assert.equal(r.body.questions.length,30);assert.equal(h.calls.length,1);assert.equal(h.calls[0].length,30);for(const q of r.body.questions){assert.equal(q.es,'');assert.equal(q.opts[0][0],'');assert.equal(q.correct,undefined);assert.equal(q.refs,undefined);assert.equal(q.feedback_text,undefined);assert.ok(q.imgs[0].startsWith('https://signed/'));}});
+test('practice reference available, only answered correct answer revealed',async()=>{const h=harness({mode:'practice'});const r=await h.request();assert.equal(r.status,200);assert.equal(r.body.questions[0].correct,0);assert.equal(r.body.questions[1].correct,undefined);assert.equal(r.body.questions[1].feedback_text,'secret');assert.equal(h.calls[0].filter(x=>x==='ref.jpg').length,1);});
+test('finished review permits answers',async()=>{const r=await harness({finished:true}).request();assert.ok(r.body.questions.every(q=>q.correct===0));});
+for(const [label,opts] of [['foreign attempt',{owner:false}],['blocked course',{enabled:false}],['archived course',{active:false}],['draft test',{published:false}],['no language',{en:false,es:false}],['sign failure',{signError:true}]])test(label+' denied',async()=>{const h=harness(opts);assert.equal((await h.request()).status,400);if(!opts.signError)assert.equal(h.calls.length,0);});
+test('large batch signs in bounded groups',async()=>{const h=harness({count:300});assert.equal((await h.request()).body.questions.length,300);assert.equal(h.calls.length,3);assert.ok(h.calls.every(x=>x.length<=100));});
+function client({expired=false,fail=false,permissions={en:true,es:false}}={}){const a={attempt:{id:'a',deadline:expired?'2000-01-01':null},mode:'practice',questions:[{},{}],answers:{0:1},feedback:{0:{correct:0}},permissions:{en:true,es:false},index:1,all:false,batchAt:0};let requests=0,renders=0,finishes=0;const status={textContent:'',classList:{add(){},remove(){}}};const ctx={attempt:a,$:()=>({...status,scrollIntoView(){}}),api:async()=>{requests++;if(fail)throw Error('failed');return {questions:[{correct:0},{imgs:[]}],permissions}},render:()=>renders++,jumpQuestion:()=>{},clear:()=>{ctx.attempt=null},finish:async()=>{finishes++;a.result={score:1}}};vm.createContext(ctx);vm.runInContext(ui,ctx);return {a,ctx,toggle:()=>ctx.toggleQuestions(),counts:()=>[requests,renders,finishes]};}
+test('first toggle one request, repeated toggle cached, answers intact',async()=>{const c=client();await c.toggle();await c.toggle();await c.toggle();assert.equal(c.counts()[0],1);assert.equal(c.a.answers[0],1);assert.equal(c.a.index,1);assert.equal(c.a.all,true);});
+test('expired timer finishes without batch',async()=>{const c=client({expired:true});await c.toggle();assert.deepEqual(c.counts(),[0,1,1]);});
+test('failed batch retains single view and answers',async()=>{const c=client({fail:true});await assert.rejects(c.toggle());assert.equal(c.a.all,false);assert.equal(c.a.answers[0],1);});
+test('changed language clears attempt',async()=>{const c=client({permissions:{en:false,es:true}});await assert.rejects(c.toggle());assert.equal(c.ctx.attempt,null);});

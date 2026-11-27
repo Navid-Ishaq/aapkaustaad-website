@@ -13,3 +13,6 @@ header button{color:#102d43;background:#fff}nav{display:flex;gap:8px;flex-wrap:w
 .sc-course-dialog .sc-course-item{margin:0;background:#fff}.sc-course-dialog .sc-course-list{max-height:48dvh;overflow:auto;padding:2px}.sc-course-dialog .sc-course-actions{flex-wrap:wrap}.sc-course-dialog .sc-course-name{overflow-wrap:anywhere}.sc-course-dialog .sc-course-error:empty{display:none}.sc-course-dialog .sc-course-actions button{flex:0 1 auto}.sc-course-trigger{white-space:nowrap}#status.course-success{color:#08736d}@media(max-width:500px){.sc-course-dialog{padding:14px}.sc-course-dialog .sc-course-actions button{flex:1}.sc-course-dialog .sc-course-languages{margin-left:0}}
 
 .student-search-bar input{flex:1 1 260px;max-width:540px;min-width:0}.student-search-box{scroll-margin-top:12px}.student-search-box .bar:last-child{justify-content:flex-start}
+
+/* Release 3.7: informational batch loading status */
+#status.loading-questions{color:#08736d;font-weight:600}
