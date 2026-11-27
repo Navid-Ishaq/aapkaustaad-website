@@ -18,7 +18,7 @@ export async function portable(record,fetcher=fetch,privateImage){
   if(cache.has(url))return cache.get(url);
   let result;
   try{
-   if(/^https:\/\//i.test(url)){
+   if(!privateImage&&/^https:\/\//i.test(url)){
     const r=await fetcher(url,{credentials:'omit',referrerPolicy:'no-referrer'});
     if(!r.ok)throw Error('Image download failed (HTTP '+r.status+').');
     const blob=await r.blob(),mime=blob.type.split(';')[0].toLowerCase();

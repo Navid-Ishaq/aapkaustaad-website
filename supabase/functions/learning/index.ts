@@ -98,10 +98,29 @@ Deno.serve(async req=>{
   const i=b.index,j=b.image,field=b.field;
   requireValue(Number.isInteger(i)&&i>=0&&i<t.questions.length&&(field==='imgs'||field==='refs')&&Number.isInteger(j)&&j>=0,'Invalid image selection');
   const path=t.questions[i][field]?.[j];
-  requireValue(typeof path==='string'&&path.length>0&&!path.includes('://'),'Private image required');
-  const blob=checked(await admin.storage.from('alnoor-learning').download(path));
-  requireValue(blob&&blob.size>0&&blob.size<=5242880,'Invalid image size');
-  const bytes=new Uint8Array(await blob.arrayBuffer());
+  requireValue(typeof path==='string'&&path.length>0,'Invalid image path');
+  let bytes:Uint8Array;
+  if(/^https:\/\//i.test(path)){
+   const u=new URL(path);
+   const allowed=u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&((u.hostname==='nova.elportaldelalumno.com'&&u.pathname.startsWith('/Datafiles/ImagesNova/'))||(u.hostname==='encrypted-tbn0.gstatic.com'&&u.pathname==='/images'));
+   if(!allowed)return reply({error:'External image host or path not approved: '+u.hostname},400);
+   try{
+    const response=await fetch(u.href,{redirect:'error',signal:AbortSignal.timeout(15000),headers:{Accept:'image/jpeg,image/png,image/webp'}});
+    if(!response.ok)return reply({error:'External image server returned HTTP '+response.status},400);
+    const limit=5242880;
+    if(Number(response.headers.get('content-length')||0)>limit){await response.body?.cancel();return reply({error:'External image exceeds 5 MB'},400);}
+    if(!response.body)return reply({error:'External image response empty'},400);
+    const reader=response.body.getReader();const chunks:Uint8Array[]=[];let total=0;
+    try{while(true){const {done,value}=await reader.read();if(done)break;total+=value.length;if(total>limit){await reader.cancel();return reply({error:'External image exceeds 5 MB'},400);}chunks.push(value);}}finally{reader.releaseLock();}
+    bytes=new Uint8Array(total);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+   }catch{return reply({error:'External image server unreachable or redirect blocked: '+u.hostname},400);}
+  }else{
+   requireValue(!path.includes('://'),'Invalid private image path');
+   const blob=checked(await admin.storage.from('alnoor-learning').download(path));
+   requireValue(blob&&blob.size>0&&blob.size<=5242880,'Invalid image size');
+   bytes=new Uint8Array(await blob.arrayBuffer());
+  }
+  requireValue(bytes.length>0,'Empty image');
   const mime=bytes[0]===255&&bytes[1]===216&&bytes[2]===255?'image/jpeg':bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71?'image/png':String.fromCharCode(...bytes.subarray(0,4))==='RIFF'&&String.fromCharCode(...bytes.subarray(8,12))==='WEBP'?'image/webp':'';
   requireValue(mime,'Unsupported image');
   let binary='';for(let k=0;k<bytes.length;k+=8192)binary+=String.fromCharCode(...bytes.subarray(k,k+8192));
