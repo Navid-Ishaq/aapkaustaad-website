@@ -88,10 +88,25 @@ Deno.serve(async req=>{
  }
  if(b.action==='export-test'){
   const t=await get('tests',b.test);const section=await get('sections',t.section_id);const course=await get('courses',section.course_id);
-  const questions=await batchQuestions(t.questions,{es:true,en:true},{finished_at:true,mode:'practice',answers:{}});
+  const questions=t.questions;
   return reply({course,section,test:{id:t.id,number:t.number,name:t.name,minutes:t.minutes,max_errors:t.max_errors,published:t.published,revision:t.revision},questions});
  }
 
+ if(b.action==='export-image'){
+  const t=await get('tests',b.test);
+  requireValue(b.revision===t.revision,'Test changed during export; retry');
+  const i=b.index,j=b.image,field=b.field;
+  requireValue(Number.isInteger(i)&&i>=0&&i<t.questions.length&&(field==='imgs'||field==='refs')&&Number.isInteger(j)&&j>=0,'Invalid image selection');
+  const path=t.questions[i][field]?.[j];
+  requireValue(typeof path==='string'&&path.length>0&&!path.includes('://'),'Private image required');
+  const blob=checked(await admin.storage.from('alnoor-learning').download(path));
+  requireValue(blob&&blob.size>0&&blob.size<=5242880,'Invalid image size');
+  const bytes=new Uint8Array(await blob.arrayBuffer());
+  const mime=bytes[0]===255&&bytes[1]===216&&bytes[2]===255?'image/jpeg':bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71?'image/png':String.fromCharCode(...bytes.subarray(0,4))==='RIFF'&&String.fromCharCode(...bytes.subarray(8,12))==='WEBP'?'image/webp':'';
+  requireValue(mime,'Unsupported image');
+  let binary='';for(let k=0;k<bytes.length;k+=8192)binary+=String.fromCharCode(...bytes.subarray(k,k+8192));
+  return reply({data:'data:'+mime+';base64,'+btoa(binary)});
+ }
  if(b.action==='editor-upload'){
   requireValue(typeof b.image==='string'&&b.image.length<=2800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(b.image),'Invalid image');
   const bytes=Uint8Array.from(atob(b.image),x=>x.charCodeAt(0));

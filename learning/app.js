@@ -1,4 +1,4 @@
-import {openExportManager} from './export-manager.js?v=4.3';
+import {openExportManager} from './export-manager.js?v=4.4';
 import {openMcqEditor} from './mcq-editor.js?v=4.1';
 import {coursePicker} from './course-picker.js?v=3.4';
 import {chatConfig} from '../student-chat-config.js';
