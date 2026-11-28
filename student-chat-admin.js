@@ -88,5 +88,6 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
  }
  $('teacher-form').onsubmit=async e=>{e.preventDefault();if(!isOwner)return;const submit=e.submitter;if(submit.disabled)return;submit.disabled=true;try{await edge('chat-admin',{action:'create-teacher',name:$('teacher-name').value,email:$('teacher-email').value,password:$('teacher-password').value});$('teacher-form').reset();await load();status('Teacher Admin created. Rights remain until you revoke them. Share initial login details privately.');}catch(e){status(e.message,true);}finally{submit.disabled=false;}};
  window.addEventListener('resize',closePopovers);
- return {load,reset,getPages:()=>({studentPage,teacherPage}),restorePages:async(s,t)=>{studentPage=Number.isSafeInteger(s)&&s>=0&&s<=100000?s:0;teacherPage=Number.isSafeInteger(t)&&t>=0&&t<=100000?t:0;if(studentPage||teacherPage)await load();}};
+ function setPages(s,t){studentPage=Number.isSafeInteger(s)&&s>=0&&s<=100000?s:0;teacherPage=Number.isSafeInteger(t)&&t>=0&&t<=100000?t:0;}
+ return {load,reset,getPages:()=>({studentPage,teacherPage}),setPages,restorePages:async(s,t)=>{setPages(s,t);if(studentPage||teacherPage)await load();}};
 }
