@@ -1,3 +1,4 @@
+import {madridToday,validDate} from '../_shared/enrollment.ts';
 import {context,checked,requireValue,uuid} from '../_shared/security.ts';
 Deno.serve(async req=>{
  const c=await context(req,3000000);if(c.early)return c.early;
@@ -10,14 +11,24 @@ Deno.serve(async req=>{
  const get=async(n:string,v:unknown)=>checked(await table(n).select('*').eq('id',id(v)).single());
  const owner=async()=>requireValue(teacher&&checked(await admin.rpc('chat_owner_id'))===user.id,'Owner required');
  const text=(v:unknown)=>{requireValue(typeof v==='string'&&v.trim().length>0&&v.length<=150,'Invalid text');return (v as string).trim();};
- const access=async(cid:string)=>{
+ const studentActions=['home','library','start','answer','finish','review','question','questions-batch','resume'];
+ let policy:any=null;
+ if(!teacher&&studentActions.includes(b.action)){
+  policy=checked(await admin.rpc('learn_activity_check',{p_user:user.id,p_touch:true}));
+  if(policy.suspended_at&&b.action!=='home')return reply({error:'Learning access suspended due to inactivity. Contact the academy.'},403);
+ }
+ const access=async(cid:string,describe=false)=>{
   const course=await get('courses',cid);if(teacher)return {en:true,es:true};requireValue(course.active,'Course unavailable');
   const direct=checked(await table('access').select('*').eq('user_id',user.id).eq('course_id',cid).maybeSingle());
-  if(direct){requireValue(direct.enabled&&(direct.en||direct.es),'Course access blocked');return direct;}
+  const expires_on=direct?.expires_on??policy?.default_expires_on??null;
+  const expired=!!policy?.expiry_enabled&&!!expires_on&&madridToday()>expires_on;
+  const reason=policy?.suspended_at?'Inactivity suspension':expired?'Course access expired':null;
+  const gate=(p:any)=>{if(reason&&!describe)throw new Error(reason);return {...p,expires_on,reason};};
+  if(direct){requireValue(direct.enabled&&(direct.en||direct.es),'Course access blocked');return gate(direct);}
   const memberships=checked(await admin.from('chat_memberships').select('class_id,chat_classes!inner(archived)').eq('user_id',user.id).eq('chat_classes.archived',false));
   requireValue(memberships.length>0,'Course not assigned');
   const groups=checked(await table('groups').select('en,es').eq('course_id',cid).in('class_id',memberships.map((m:any)=>m.class_id)));
-  const en=groups.some((g:any)=>g.en),es=groups.some((g:any)=>g.es);requireValue(en||es,'Course not assigned');return {en,es};
+  const en=groups.some((g:any)=>g.en),es=groups.some((g:any)=>g.es);requireValue(en||es,'Course not assigned');return gate({en,es});
  };
  const test=async(tid:unknown)=>{const t=await get('tests',tid);const s=await get('sections',t.section_id);const p=await access(s.course_id);requireValue(teacher||t.published,'Test unavailable');return {t,s,p};};
  const images=async(a:string[]=[])=>Promise.all(a.map(async x=>{if(x.startsWith('https://'))return x;const r=checked(await admin.storage.from('alnoor-learning').createSignedUrl(x,3600));return r.signedUrl;}));
@@ -40,8 +51,8 @@ Deno.serve(async req=>{
  };
  const touch=async(cid:string,p:any)=>{if(!teacher&&p.user_id)checked(await table('access').update({last_activity:new Date().toISOString()}).eq('user_id',user.id).eq('course_id',cid));};
  if(b.action==='home'){
-  const all=checked(await table('courses').select('*').order('name'));const courses=[];for(const x of all){try{await access(x.id);courses.push(x);}catch{}}
-  return reply({teacher,name:profile.display_name,courses});
+  const all=checked(await table('courses').select('*').order('name'));const courses=[];for(const x of all){try{const a=await access(x.id,true);courses.push({...x,expires_on:a.expires_on??null,reason:a.reason??null});}catch{}}
+  return reply({teacher,name:profile.display_name,courses,policy});
  }
  if(b.action==='library'){
   const cid=id(b.course);const p=await access(cid);const sections=checked(await table('sections').select('*').eq('course_id',cid).order('name'));let tests:any[]=[];
@@ -168,16 +179,27 @@ Deno.serve(async req=>{
   return reply({ok:true,revision:updated.data.revision});
  }
 
+ if(b.action==='enrollment-settings')return reply({courses:checked(await table('courses').select('id,name,code,active').eq('active',true).order('name')),settings:checked(await table('settings').select('*').single())});
+ if(b.action==='enrollment-settings-save'){
+  requireValue(typeof b.auto_block==='boolean'&&typeof b.expiry_enabled==='boolean'&&Number.isInteger(b.inactivity_days)&&b.inactivity_days>=1&&b.inactivity_days<=365,'Invalid settings');
+  checked(await table('settings').update({auto_block:b.auto_block,expiry_enabled:b.expiry_enabled,inactivity_days:b.inactivity_days}).eq('id',true));return reply({ok:true});
+ }
+ if(b.action==='student-learning-restore'){
+  const sid=id(b.student);const student=checked(await admin.from('chat_profiles').select('role').eq('id',sid).single());requireValue(student.role==='student','Student required');
+  checked(await admin.rpc('learn_activity_check',{p_user:sid,p_touch:false}));
+  checked(await table('student_policy').update({last_learning_at:new Date().toISOString(),suspended_at:null}).eq('user_id',sid));return reply({ok:true});
+ }
  if(b.action==='student-courses'||b.action==='student-courses-save'){
   const sid=id(b.student);const student=checked(await admin.from('chat_profiles').select('role').eq('id',sid).single());requireValue(student.role==='student','Student required');
   const courses=checked(await table('courses').select('id,name,code,active').order('name'));
   const direct=checked(await table('access').select('*').eq('user_id',sid));
   const memberships=checked(await admin.from('chat_memberships').select('class_id,chat_classes!inner(archived)').eq('user_id',sid).eq('chat_classes.archived',false));
   const groups=memberships.length?checked(await table('groups').select('course_id,en,es').in('class_id',memberships.map((m:any)=>m.class_id))):[];
-  const snapshot=()=>courses.map((course:any)=>{const a=direct.find((x:any)=>x.course_id===course.id);const g=groups.filter((x:any)=>x.course_id===course.id);const en=a?!!a.en:g.some((x:any)=>x.en),es=a?!!a.es:g.some((x:any)=>x.es);return {...course,enabled:!!course.active&&(a?!!a.enabled:true)&&(en||es),en,es,source:a?'Individual':(en||es?'Group':'Not assigned')};});
-  if(b.action==='student-courses')return reply({courses:snapshot()});
+  const studentPolicy=checked(await admin.rpc('learn_activity_check',{p_user:sid,p_touch:false}));
+  const snapshot=()=>courses.map((course:any)=>{const a=direct.find((x:any)=>x.course_id===course.id);const g=groups.filter((x:any)=>x.course_id===course.id);const en=a?!!a.en:g.some((x:any)=>x.en),es=a?!!a.es:g.some((x:any)=>x.es);return {...course,enabled:!!course.active&&(a?!!a.enabled:true)&&(en||es),en,es,expires_on:a?.expires_on??null,effective_expiry:a?.expires_on??studentPolicy.default_expires_on??null,source:a?'Individual':(en||es?'Group':'Not assigned')};});
+  if(b.action==='student-courses')return reply({courses:snapshot(),policy:studentPolicy});
   requireValue(Array.isArray(b.changes)&&b.changes.length>0&&b.changes.length<=100,'Invalid course changes');
-  const seen=new Set<string>();const rows=b.changes.map((change:any)=>{const cid=id(change.course);const course=courses.find((x:any)=>x.id===cid);requireValue(!!course&&!seen.has(cid),'Invalid or duplicate course');seen.add(cid);requireValue(typeof change.enabled==='boolean'&&typeof change.en==='boolean'&&typeof change.es==='boolean','Invalid permissions');requireValue(!change.enabled||(course.active&&(change.en||change.es)),'Active course and language required');const old=direct.find((x:any)=>x.course_id===cid);return {user_id:sid,course_id:cid,enabled:change.enabled,en:change.en,es:change.es,last_activity:old?.last_activity??new Date().toISOString()};});
+  const seen=new Set<string>();const rows=b.changes.map((change:any)=>{const cid=id(change.course);const course=courses.find((x:any)=>x.id===cid);requireValue(!!course&&!seen.has(cid),'Invalid or duplicate course');seen.add(cid);requireValue(typeof change.enabled==='boolean'&&typeof change.en==='boolean'&&typeof change.es==='boolean','Invalid permissions');requireValue(!change.enabled||(course.active&&(change.en||change.es)),'Active course and language required');const old=direct.find((x:any)=>x.course_id===cid);return {user_id:sid,course_id:cid,enabled:change.enabled,en:change.en,es:change.es,last_activity:old?.last_activity??new Date().toISOString(),expires_on:change.expires_on===undefined?old?.expires_on??null:(change.expires_on===null||validDate(change.expires_on)?change.expires_on:(()=>{throw new Error('Invalid expiry date')})())};});
   checked(await table('access').upsert(rows,{onConflict:'user_id,course_id'}));return reply({ok:true});
  }
  if(b.action==='student-search'){
@@ -214,5 +236,5 @@ Deno.serve(async req=>{
   let query=table('attempts').select('id,user_id,test_id,score,total,passed,seconds,finished_at').not('finished_at','is',null).order('finished_at',{ascending:false}).limit(1000);if(b.student)query=query.eq('user_id',id(b.student));if(b.course){const sections=checked(await table('sections').select('id').eq('course_id',id(b.course)));const ids=sections.length?checked(await table('tests').select('id').in('section_id',sections.map((x:any)=>x.id))):[];if(!ids.length)return reply({rows:[]});query=query.in('test_id',ids.map((x:any)=>x.id));}return reply({rows:checked(await query)});
  }else throw new Error('Unknown action');
  return reply({ok:true});
- }catch(e){console.error(String(e));return reply({error:'Operation denied or failed. Check permissions and inputs.'},400);}
+ }catch(e){if(e instanceof Error&&['Course access expired','Inactivity suspension'].includes(e.message))return reply({error:e.message+'. Contact the academy.'},403);console.error(String(e));return reply({error:'Operation denied or failed. Check permissions and inputs.'},400);}
 });

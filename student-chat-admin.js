@@ -1,4 +1,4 @@
-import {coursePicker} from './student-chat-courses.js?v=3.3';
+import {coursePicker} from './student-chat-courses.js?v=4.8';
 // All account reads/changes go through the authenticated, server-authorized Edge Function.
 export function createAdminTools({edge,getClasses,status,element,button}) {
  const $=id=>document.getElementById(id);

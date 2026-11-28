@@ -1,3 +1,4 @@
+import {madridToday,validDate,addMonths} from '../_shared/enrollment.ts';
 import {context,checked,requireValue,strong,uuid} from '../_shared/security.ts';
 import {collectMedia} from '../_shared/media-gc.ts';
 const validEmail=(v:unknown):v is string=>typeof v==='string'&&v.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -82,7 +83,17 @@ Deno.serve(async req=>{
   const teacher=b.action==='create-teacher';requireValue(!teacher||isOwner,'Only the owner can create Teacher Admins');
   requireValue(typeof b.name==='string'&&b.name.trim().length>0&&b.name.trim().length<=80,'Name must contain 1â€“80 characters');
   requireValue(validEmail(b.email),'Valid email required');requireValue(strong(b.password),'Use 8â€“128 characters with uppercase, lowercase, number and symbol');
-  let ids:string[]=[];
+  let ids:string[]=[];let expiry:string|null=null;let courseRows:any[]=[];let welcomeCourses:any[]=[];let inactivityDays=7;
+  if(!teacher){
+   const e=b.enrollment??{duration:3,courses:[]};const today=madridToday();requireValue(e&&typeof e==='object','Invalid enrollment');
+   if(e.duration==='custom'){requireValue(validDate(e.expires_on)&&e.expires_on>=today,'Invalid expiry date');expiry=e.expires_on;}
+   else{requireValue([2,3,4].includes(e.duration),'Choose 2, 3, 4 months or a custom date');expiry=addMonths(today,e.duration);}
+   requireValue(Array.isArray(e.courses)&&e.courses.length<=100,'Invalid courses');const selected=new Set<string>();
+   for(const x of e.courses){requireValue(x&&uuid(x.course)&&!selected.has(x.course)&&typeof x.en==='boolean'&&typeof x.es==='boolean'&&(x.en||x.es),'Invalid course or languages');selected.add(x.course);courseRows.push({course_id:x.course,en:x.en,es:x.es,enabled:true,expires_on:expiry});}
+   const courses=checked(await admin.from('learn_courses').select('id,name,code').eq('active',true));requireValue(courseRows.every(x=>courses.some((c:any)=>c.id===x.course_id)),'Course unavailable');
+   const settings=checked(await admin.from('learn_settings').select('inactivity_days,auto_block,expiry_enabled').single());inactivityDays=settings.auto_block?settings.inactivity_days:0;
+   welcomeCourses=courses;
+  }
   if(!teacher){
    requireValue(Array.isArray(b.class_ids)&&b.class_ids.length>0&&b.class_ids.length<=100&&b.class_ids.every(uuid),'Choose at least one class');
    ids=[...new Set<string>(b.class_ids)];
@@ -95,8 +106,14 @@ Deno.serve(async req=>{
   try{
    checked(await admin.from('chat_profiles').insert({id:target,display_name:b.name.trim(),role:teacher?'admin':'student',must_change_password:false}));
    if(ids.length)checked(await admin.from('chat_memberships').insert(ids.map(class_id=>({class_id,user_id:target}))));
+   if(!teacher&&expiry){
+    checked(await admin.from('learn_student_policy').insert({user_id:target,default_expires_on:expiry}));
+    if(courseRows.length)checked(await admin.from('learn_access').insert(courseRows.map(x=>({...x,user_id:target}))));
+    const groups=checked(await admin.from('learn_groups').select('course_id,en,es').in('class_id',ids));
+    welcomeCourses=welcomeCourses.flatMap(c=>{const direct=courseRows.find(x=>x.course_id===c.id);const g=groups.filter((x:any)=>x.course_id===c.id);const en=direct?direct.en:g.some((x:any)=>x.en),es=direct?direct.es:g.some((x:any)=>x.es);return en||es?[{...c,en,es}]:[];});
+   }
   }catch(error){await admin.from('chat_profiles').update({active:false}).eq('id',target);await admin.auth.admin.deleteUser(target);throw error;}
-  result={id:target};break;
+  result={id:target,...(expiry?{expires_on:expiry,courses:welcomeCourses,inactivity_days:inactivityDays}:{})};break;
  }
  case 'assign':
  case 'remove':{

@@ -7,11 +7,12 @@ const courses=[{id:a,name:'Driving',active:true},{id:b,name:'VTC',active:true},{
 const direct=[{course_id:a,user_id:student,enabled:true,en:true,es:false,last_activity:'2026-11-01T00:00:00Z'}];
 let role='admin',active=true,targetRole='student',writes=[],handler;
 globalThis.Deno={env:{get:()=>undefined},serve:fn=>handler=fn};
-globalThis.__client=()=>({auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},from(name){let selected;let result;const q={select(){return q},eq(k,v){if(k==='id')selected=v;return q},in(){return q},order(){return q},single:async()=>({data:{role:selected===actor?role:targetRole,active,must_change_password:false},error:null}),upsert(rows){writes.push({name,rows});result=[];return q},then(resolve,reject){return Promise.resolve({data:result??({learn_courses:courses,learn_access:direct,chat_memberships:[{class_id:group}],learn_groups:[{course_id:b,en:false,es:true}]}[name]??[]),error:null}).then(resolve,reject)}};return q;}});
+globalThis.__client=()=>({rpc:async()=>({data:{last_learning_at:'2026-11-01T00:00:00Z',suspended_at:null,default_expires_on:null},error:null}),auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},from(name){let selected;let result;const q={select(){return q},eq(k,v){if(k==='id')selected=v;return q},in(){return q},order(){return q},single:async()=>({data:{role:selected===actor?role:targetRole,active,must_change_password:false},error:null}),upsert(rows){writes.push({name,rows});result=[];return q},then(resolve,reject){return Promise.resolve({data:result??({learn_courses:courses,learn_access:direct,chat_memberships:[{class_id:group}],learn_groups:[{course_id:b,en:false,es:true}]}[name]??[]),error:null}).then(resolve,reject)}};return q;}});
 const read=p=>readFileSync(new URL('../supabase/functions/'+p,import.meta.url),'utf8');
 const url=s=>'data:text/javascript;base64,'+Buffer.from(stripTypeScriptTypes(s)).toString('base64');
 const shared=url(read('_shared/security.ts').replace("import { createClient } from 'npm:@supabase/supabase-js@2.57.4';",'const createClient=globalThis.__client;'));
-await import(url(read('learning/index.ts').replace("'../_shared/security.ts'",JSON.stringify(shared))));
+const enrollment=url(read('_shared/enrollment.ts'));
+await import(url(read('learning/index.ts').replace("'../_shared/security.ts'",JSON.stringify(shared)).replace("'../_shared/enrollment.ts'",JSON.stringify(enrollment))));
 async function req(action,changes){writes=[];const r=await handler(new Request('https://test/learning',{method:'POST',headers:{Authorization:'Bearer valid',Origin:'https://aapkaustaad.com'},body:JSON.stringify({action,student,changes})}));return {status:r.status,body:await r.json()};}
 const change=(course,enabled=true,en=true,es=false)=>({course,enabled,en,es});
 const reset=()=>{role='admin';active=true;targetRole='student';};
