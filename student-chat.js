@@ -1,4 +1,4 @@
-import {communicationTools} from './student-chat-communication.js?v=4.9.3';
+import {communicationTools} from './student-chat-communication.js?v=4.9.4';
 let communication;
 import {saveNavigation,readNavigation,clearNavigation} from './student-chat-navigation-restore.js?v=4.8.5';
 import {enrollmentTools} from './student-chat-enrollment.js?v=4.8.3';
