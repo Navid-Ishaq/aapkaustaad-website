@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const js=readFileSync(new URL('../student-chat.js',import.meta.url),'utf8');
+const html=readFileSync(new URL('../student-chat.html',import.meta.url),'utf8');
+test('no full-screen overlay or hidden main header',()=>{assert.ok(!html.includes('sc-restoring-navigation #student-chat {visibility:hidden}'));assert.ok(!html.includes('position:fixed;inset:0;z-index:2147483647'));assert.match(html,/sc-restoring-navigation #sc-navigation-loading \{display:block;position:fixed;top:/)});
+test('independent enrollment and class fetches start together',()=>{assert.match(js,/Promise\.allSettled\(\[timed\('Classes',loadClasses\)\.then\(\(\)=>timed\('Admin accounts',\(\)=>loadAdmin\(saved,true\)\)\),timed\('Enrollment settings',\(\)=>enrollment\.load\(\)\)\]\)/);assert.match(js,/if\(startup\)\{await adminTools\.load\(\);\}/)});
+test('authentication and active profile precede admin loading',()=>{assert.ok(js.indexOf('if(!profile?.active)')<js.indexOf("if(restore&&profile.role==='admin')"));assert.match(js,/if\(saved\?\.admin\)adminTools\.setPages/)});
+test('restore scroll before clearing loading state',()=>{assert.ok(js.indexOf('top:saved.scroll')<js.indexOf("finally{document.documentElement.classList.remove('sc-restoring-navigation')"))});
+test('timing logs contain stage and milliseconds only',()=>{assert.match(js,/startupTimings.push\(\{stage:label,ms:Math.round\(performance.now\(\)-start\)\}\)/);assert.match(js,/console.table\(\[...startupTimings/)});
+test('cache version bumped',()=>assert.match(html,/student-chat.js\?v=4\.8\.7/));
