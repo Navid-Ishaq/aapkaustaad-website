@@ -57,8 +57,13 @@ Deno.serve(async req=>{
  case 'list-accounts':{
   requireValue(b.kind==='students'||(b.kind==='teachers'&&isOwner),'Account list denied');
   const page=b.page??0;requireValue(Number.isInteger(page)&&page>=0&&page<=100000,'Invalid page');
-  const people=checked(await admin.from('chat_profiles').select('id,display_name,role,active,must_change_password,created_at')
-   .eq('role',b.kind==='teachers'?'admin':'student').order('created_at').order('id').range(page*25,page*25+25));
+  const search=b.search??'';requireValue(typeof search==='string'&&search.length<=150,'Invalid student search');
+  requireValue(b.kind==='students'||!search,'Student search only');
+  const term=search.trim();
+  let query=admin.from('chat_profiles').select('id,display_name,role,active,must_change_password,created_at',{count:'exact'}).eq('role',b.kind==='teachers'?'admin':'student');
+  if(term)query=query.ilike('display_name','%'+term.replace(/[\\%_]/g,(c:string)=>'\\'+c)+'%');
+  const response=await query.order('created_at').order('id').range(page*25,page*25+25);
+  const people=checked(response);
   requireValue(people,'Account list unavailable');
   const visible=people.slice(0,25);
   const accounts=await Promise.all(visible.map(async p=>{
@@ -66,7 +71,7 @@ Deno.serve(async req=>{
    return {...p,email:auth.data.user.email||'',is_owner:p.id===ownerId};
   }));
   const memberships=visible.length?checked(await admin.from('chat_memberships').select('*').in('user_id',visible.map(p=>p.id))):[];
-  return reply({data:{is_owner:isOwner,accounts,memberships,has_more:people.length>25}});
+  return reply({data:{is_owner:isOwner,accounts,memberships,has_more:people.length>25,total:response.count}});
  }
  case 'create-class':
  case 'rename-class':{

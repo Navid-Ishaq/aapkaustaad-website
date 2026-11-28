@@ -3,6 +3,8 @@ import {coursePicker} from './student-chat-courses.js?v=4.8';
 export function createAdminTools({edge,getClasses,status,element,button}) {
  const $=id=>document.getElementById(id);
  let studentPage=0,teacherPage=0,isOwner=false,version=0,edit=null,saveBusy=false,deletion=null,deleteBusy=false;
+ let studentSearch='',studentGeneration=0,searchTimer;
+ const searchInput=$('sc-student-search'),searchNote=$('sc-student-search-note');
  const deleteDialog=$('delete-dialog');
  function openDeletion(data){deletion=data;$('delete-confirm-form').reset();$('delete-error').textContent='';const account=data.kind==='account';$('delete-title').textContent=account?'Delete '+(data.p.role==='admin'?'Teacher Admin':'student')+' account':'Delete class history';$('delete-description').textContent=account?data.p.display_name+' · '+data.p.email:data.preview.class_name;$('delete-detail').textContent=account?'Login, profile and class memberships will be removed. Existing messages stay as '+(data.p.role==='admin'?'Former teacher':'Former student')+'.':data.preview.count+' messages before '+data.preview.before_date+' at 00:00 Europe/Madrid will be deleted. The selected date and later messages stay.';if(data.kind==='class'){$('delete-title').textContent='Delete class permanently';$('delete-description').textContent=data.preview.class_name;$('delete-detail').textContent='This class, '+data.preview.members+' memberships and all '+data.preview.count+' messages with their media will be permanently removed. Student accounts will remain. Type DELETE to confirm.';}deleteDialog.showModal();$('delete-word').focus();}
  $('delete-cancel').onclick=()=>{if(!deleteBusy)deleteDialog.close();};
@@ -17,7 +19,7 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
  const runChange=async fn=>{try{await fn();}catch(e){status(e.message||'Change failed',true);throw e;}};
  function closePopovers(){document.querySelectorAll('.sc-class-popover:popover-open').forEach(p=>p.hidePopover());}
  $('media-collect').onclick=async()=>{if(!isOwner)return;const button=$('media-collect');button.disabled=true;try{const result=await edge('chat-media',{action:'collect'});status(result.ok?'Unused media file cleanup complete.':'Some files are still queued. Please retry cleanup shortly.');}catch(e){status(e.message,true);}finally{button.disabled=false;}};
- function reset(){studentPage=0;teacherPage=0;document.querySelectorAll('.sc-course-dialog').forEach(d=>{d.close();d.remove();});version++;isOwner=false;closePopovers();document.querySelectorAll('.sc-class-popover').forEach(p=>p.remove());$('admin-students').replaceChildren();$('admin-teachers').replaceChildren();$('owner-panel').hidden=true;dialog.close();deleteDialog.close();$('account-edit-form').reset();edit=null;deletion=null;}
+ function reset(){clearTimeout(searchTimer);studentGeneration++;studentSearch='';searchInput.value='';searchNote.textContent='';studentPage=0;teacherPage=0;document.querySelectorAll('.sc-course-dialog').forEach(d=>{d.close();d.remove();});version++;isOwner=false;closePopovers();document.querySelectorAll('.sc-class-popover').forEach(p=>p.remove());$('admin-students').replaceChildren();$('admin-teachers').replaceChildren();$('owner-panel').hidden=true;dialog.close();deleteDialog.close();$('account-edit-form').reset();edit=null;deletion=null;}
  function openEditor(p,kind){
   edit={p,kind};$('account-edit-form').reset();$('edit-error').textContent='';$('edit-title').textContent=(kind==='password'?'Reset password':kind==='email'?'Change email':'Edit name')+' · '+p.display_name;
   $('edit-value-label').textContent=kind==='password'?'New temporary password':kind==='email'?'Email address':'Display name';
@@ -60,7 +62,7 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
    catch(e){checkbox.checked=!next;status(e.message||'Access change failed',true);}finally{checkbox.disabled=false;}
   };return wrap;
  }
- function renderAccounts(container,accounts,memberships,kind,hasMore,page){
+ function renderAccounts(container,accounts,memberships,kind,hasMore,page,total=null){
   if(kind==='students'){closePopovers();document.querySelectorAll('.sc-class-popover').forEach(p=>p.remove());}
   container.replaceChildren();const table=element('table',undefined,'sc-account-table'+(kind==='students'?' sc-course-table':''));table.setAttribute('aria-label',kind==='teachers'?'Teacher Admin accounts':'Student accounts');const head=element('thead'),hr=element('tr');
   for(const title of ['Name','Email','Password',kind==='teachers'?'Role':'Classes',...(kind==='students'?['Courses']:[]),kind==='teachers'?'Admin access':'Chat access','Actions'])hr.append(element('th',title));head.append(hr);const body=element('tbody');
@@ -73,9 +75,26 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
   }
   if(!accounts.length){const row=element('tr'),cell=element('td','No '+(kind==='teachers'?'Teacher Admins':'students')+' on this page.');cell.colSpan=kind==='students'?7:6;row.append(cell);body.append(row);}
   table.append(head,body);const scroll=element('div',undefined,'sc-table-scroll');scroll.append(table);container.append(scroll);
-  const pager=element('div',undefined,'sc-pager');const prev=button('Previous',async()=>{if(kind==='students')studentPage--;else teacherPage--;await load();});prev.disabled=page===0;const next=button('Next',async()=>{if(kind==='students')studentPage++;else teacherPage++;await load();});next.disabled=!hasMore;pager.append(prev,element('span','Page '+(page+1),'sc-muted'),next);container.append(pager);
+  const pager=element('div',undefined,'sc-pager');const prev=button('Previous',async()=>{if(kind==='students'){studentPage--;await loadStudents();}else{teacherPage--;await load();}});prev.disabled=page===0;const next=button('Next',async()=>{if(kind==='students'){studentPage++;await loadStudents();}else{teacherPage++;await load();}});next.disabled=!hasMore;pager.append(prev,element('span','Page '+(page+1)+(kind==='students'&&Number.isInteger(total)?' / '+Math.max(1,Math.ceil(total/25)):''),'sc-muted'),next);container.append(pager);
  }
- async function load(){const ticket=version;const response=await edge('chat-admin',{action:'list-accounts',kind:'students',page:studentPage});if(ticket!==version)return;const data=response.data;isOwner=data.is_owner;$('owner-panel').hidden=!isOwner;$('owner-badge').hidden=!isOwner;renderAccounts($('admin-students'),data.accounts,data.memberships,'students',data.has_more,studentPage);
+ async function loadStudents(){
+  const ticket=version,generation=++studentGeneration,page=studentPage,search=studentSearch;
+  searchNote.textContent='Loading students…';$('admin-students').querySelectorAll('.sc-pager button').forEach(b=>b.disabled=true);
+  try{
+   const response=await edge('chat-admin',{action:'list-accounts',kind:'students',page,search});
+   if(ticket!==version)return null;
+   const data=response.data;
+   if(generation!==studentGeneration)return data;
+   if(!data.accounts.length&&page>0){studentPage=Math.max(0,Math.ceil((data.total??0)/25)-1);return await loadStudents();}
+   renderAccounts($('admin-students'),data.accounts,data.memberships,'students',data.has_more,page,data.total);
+   searchNote.textContent=Number.isInteger(data.total)?data.total+(search?' matching students':' students'):'';
+   return data;
+  }catch(e){if(ticket!==version||generation!==studentGeneration)return null;searchNote.textContent=e.message||'Student search failed.';const retry=button('Retry',loadStudents);$('admin-students').replaceChildren(retry);throw e;}
+ }
+ function changeSearch(){clearTimeout(searchTimer);studentGeneration++;studentSearch=searchInput.value.trim();studentPage=0;closePopovers();$('admin-students').replaceChildren();searchNote.textContent='Searching students…';searchTimer=setTimeout(()=>loadStudents().catch(e=>status(e.message,true)),300);}
+ searchInput.addEventListener('input',changeSearch);
+ $('sc-student-search-clear').onclick=()=>{searchInput.value='';changeSearch();searchInput.focus();};
+ async function load(){const ticket=version;const data=await loadStudents();if(ticket!==version)return;if(data){isOwner=data.is_owner;$('owner-panel').hidden=!isOwner;$('owner-badge').hidden=!isOwner;}
   const selectedClasses=new Set([...$('student-classes').querySelectorAll('input:checked')].map(x=>x.value));$('admin-classes').replaceChildren();$('student-classes').replaceChildren();
   const wrapper=element('div',undefined,'sc-class-table-wrap');wrapper.tabIndex=0;wrapper.setAttribute('role','region');wrapper.setAttribute('aria-label','Class management');const table=element('table',undefined,'sc-class-table'),head=element('thead'),heading=element('tr');for(const title of ['Class name','Admin/Teacher Voice','Student Voice','Image Upload','Actions']){const th=element('th',title);th.scope='col';heading.append(th);}head.append(heading);const tbody=element('tbody');table.append(head,tbody);wrapper.append(table);$('admin-classes').append(wrapper);
   for(const c of getClasses()){
@@ -89,5 +108,5 @@ export function createAdminTools({edge,getClasses,status,element,button}) {
  $('teacher-form').onsubmit=async e=>{e.preventDefault();if(!isOwner)return;const submit=e.submitter;if(submit.disabled)return;submit.disabled=true;try{await edge('chat-admin',{action:'create-teacher',name:$('teacher-name').value,email:$('teacher-email').value,password:$('teacher-password').value});$('teacher-form').reset();await load();status('Teacher Admin created. Rights remain until you revoke them. Share initial login details privately.');}catch(e){status(e.message,true);}finally{submit.disabled=false;}};
  window.addEventListener('resize',closePopovers);
  function setPages(s,t){studentPage=Number.isSafeInteger(s)&&s>=0&&s<=100000?s:0;teacherPage=Number.isSafeInteger(t)&&t>=0&&t<=100000?t:0;}
- return {load,reset,getPages:()=>({studentPage,teacherPage}),setPages,restorePages:async(s,t)=>{setPages(s,t);if(studentPage||teacherPage)await load();}};
+ return {load,reset,getPages:()=>({studentPage:studentSearch?0:studentPage,teacherPage}),setPages,restorePages:async(s,t)=>{setPages(s,t);if(studentPage||teacherPage)await load();}};
 }
