@@ -95,10 +95,11 @@ Deno.serve(async req=>{
    welcomeCourses=courses;
   }
   if(!teacher){
-   requireValue(Array.isArray(b.class_ids)&&b.class_ids.length>0&&b.class_ids.length<=100&&b.class_ids.every(uuid),'Choose at least one class');
+   requireValue(Array.isArray(b.class_ids)&&b.class_ids.length<=100&&b.class_ids.every(uuid),'Invalid classes');
    ids=[...new Set<string>(b.class_ids)];
-   const classes=checked(await admin.from('chat_classes').select('id').in('id',ids).eq('archived',false));
-   requireValue(classes&&classes.length===ids.length,'Some classes are unavailable');
+   requireValue(ids.length>0||courseRows.length>0,'Choose at least one class or learning course');
+   if(ids.length){const classes=checked(await admin.from('chat_classes').select('id').in('id',ids).eq('archived',false));
+   requireValue(classes&&classes.length===ids.length,'Some classes are unavailable');}
   }
   const {data,error}=await admin.auth.admin.createUser({email:b.email.trim(),password:b.password,email_confirm:true});
   requireValue(!error&&data.user,'Account could not be created. Check the email/password; an account may already exist.');
@@ -109,7 +110,7 @@ Deno.serve(async req=>{
    if(!teacher&&expiry){
     checked(await admin.from('learn_student_policy').insert({user_id:target,default_expires_on:expiry}));
     if(courseRows.length)checked(await admin.from('learn_access').insert(courseRows.map(x=>({...x,user_id:target}))));
-    const groups=checked(await admin.from('learn_groups').select('course_id,en,es').in('class_id',ids));
+    const groups=ids.length?checked(await admin.from('learn_groups').select('course_id,en,es').in('class_id',ids)):[];
     welcomeCourses=welcomeCourses.flatMap(c=>{const direct=courseRows.find(x=>x.course_id===c.id);const g=groups.filter((x:any)=>x.course_id===c.id);const en=direct?direct.en:g.some((x:any)=>x.en),es=direct?direct.es:g.some((x:any)=>x.es);return en||es?[{...c,en,es}]:[];});
    }
   }catch(error){await admin.from('chat_profiles').update({active:false}).eq('id',target);await admin.auth.admin.deleteUser(target);throw error;}
