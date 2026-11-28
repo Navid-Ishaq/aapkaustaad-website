@@ -85,6 +85,14 @@ Deno.serve(async req=>{
   checked(await table('attempts').update(result).eq('id',a.id).eq('answers',JSON.stringify(a.answers)).is('finished_at',null).select('id').single());return reply({result:{...a,...result},questions:await Promise.all(q.map((x:any)=>clean(x,p,true)))});
  }
  requireValue(teacher,'Administrator required');
+ // Admin-only teaching snapshot; never records an answer or changes the attempt.
+ if(b.action==='question-snapshot'){
+  const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id,'Attempt denied');
+  const t=await get('tests',a.test_id);const revision=b.edited===true?(t.revision??1):(a.test_revision??1);
+  const saved=revision===(t.revision??1)?t:checked(await table('test_revisions').select('questions').eq('test_id',t.id).eq('revision',revision).single());
+  const i=b.index;requireValue(Number.isInteger(i)&&i>=0&&i<saved.questions.length,'Invalid question');
+  return reply({test:{id:t.id,name:t.name,number:t.number,revision},question:await clean(saved.questions[i],{es:true,en:true},true,false),total:saved.questions.length});
+ }
  // Export reads only latest test content, with fresh signed URLs; no student records.
  if(b.action==='export-courses')return reply({courses:checked(await table('courses').select('id,name,code,active').order('name'))});
  if(b.action==='export-sections'){
@@ -105,10 +113,15 @@ Deno.serve(async req=>{
 
  if(b.action==='export-image'){
   const t=await get('tests',b.test);
-  requireValue(b.revision===t.revision,'Test changed during export; retry');
+  let imageQuestions=t.questions;
+  if(b.attempt!==undefined){
+   const a=await get('attempts',b.attempt);requireValue(a.user_id===user.id&&a.test_id===t.id,'Attempt denied');
+   const revision=a.test_revision??1;requireValue(b.revision===revision,'Snapshot revision mismatch');
+   if(revision!==(t.revision??1))imageQuestions=checked(await table('test_revisions').select('questions').eq('test_id',t.id).eq('revision',revision).single()).questions;
+  }else requireValue(b.revision===t.revision,'Test changed during export; retry');
   const i=b.index,j=b.image,field=b.field;
-  requireValue(Number.isInteger(i)&&i>=0&&i<t.questions.length&&(field==='imgs'||field==='refs')&&Number.isInteger(j)&&j>=0,'Invalid image selection');
-  const path=t.questions[i][field]?.[j];
+  requireValue(Number.isInteger(i)&&i>=0&&i<imageQuestions.length&&(field==='imgs'||field==='refs')&&Number.isInteger(j)&&j>=0,'Invalid image selection');
+  const path=imageQuestions[i][field]?.[j];
   requireValue(typeof path==='string'&&path.length>0,'Invalid image path');
   let bytes:Uint8Array;
   if(/^https:\/\//i.test(path)){
