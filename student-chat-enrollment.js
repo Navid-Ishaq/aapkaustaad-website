@@ -6,9 +6,60 @@ export function madridToday(now=new Date()){
 export function addMonths(day,months){const [y,m,d]=day.split('-').map(Number);const date=new Date(Date.UTC(y,m-1+months,1));const last=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).getUTCDate();date.setUTCDate(Math.min(d,last));return date.toISOString().slice(0,10);}
 const fmt=d=>d?d.split('-').reverse().join('/'):'—';
 export function welcomeMessage(name,email,data){
- const courses=data.courses.map(c=>`${c.name} (${[c.en?'English':'',c.es?'Español':''].filter(Boolean).join(' / ')})`).join('\n')||'—';
- const driving=data.courses.some(c=>c.code==='DRV-B');const days=data.inactivity_days;const date=fmt(data.expires_on);
- return `Dear ${name},\n\nWelcome to AL-NOOR Language Academy! Your student account is ready.\nPortal: https://aapkaustaad.com/student-chat.html\nLearning: https://aapkaustaad.com/learning/\nEmail: ${email}\nTemporary password: [Share privately or paste here before sending]\nCourses:\n${courses}\nAccess valid until: ${date}\nPlease change your temporary password after signing in. Study regularly and practise every day.${driving?' With consistent preparation, students can generally be ready for the driving theory exam in six weeks. Aim to pass within three months.':''}${days?` Learning access is suspended after ${days} days without using the Learning Platform. Contact the academy for restoration.`:''}\nWe wish you every success!\n\nESPAÑOL\n\nEstimado/a ${name}:\n¡Bienvenido/a a AL-NOOR Language Academy! Tu cuenta ya está lista.\nPortal y correo: los indicados arriba.\nCursos:\n${courses}\nAcceso válido hasta: ${date}\nCambia tu contraseña temporal al iniciar sesión. Estudia y practica todos los días.${driving?' Con preparación constante, generalmente puedes estar preparado/a para el examen teórico de conducir en seis semanas. Intenta aprobarlo en un plazo de tres meses.':''}${days?` El acceso a la plataforma de aprendizaje se suspende tras ${days} días sin usarla. Contacta con la academia para reactivarlo.`:''}\n¡Mucho éxito!\n\nاردو\n\nمحترم ${name}،\nالنور لینگویج اکیڈمی میں خوش آمدید! آپ کا اکاؤنٹ تیار ہے۔\nپورٹل اور ای میل اوپر درج ہیں۔\nرسائی کی آخری تاریخ: ${date}\nپہلی مرتبہ لاگ اِن کرنے کے بعد اپنا عارضی پاس ورڈ تبدیل کریں۔ روزانہ پڑھائی اور ٹیسٹ کی مشق کریں۔${driving?' مسلسل محنت سے عموماً چھ ہفتوں میں ڈرائیونگ تھیوری امتحان کی تیاری ہو سکتی ہے۔ کوشش کریں کہ تین ماہ میں امتحان پاس کر لیں۔':''}${days?` اگر آپ ${days} دن تک لرننگ پلیٹ فارم استعمال نہیں کریں گے تو آپ کی رسائی معطل ہو جائے گی۔ بحالی کے لیے اکیڈمی سے رابطہ کریں۔`:''}\nاللہ تعالیٰ آپ کو کامیاب کرے۔ آمین۔\n\nKind regards / Un cordial saludo / نیک تمناؤں کے ساتھ\nAL-NOOR Language Academy\nAapka Ustaad\nhttps://aapkaustaad.com`;
+ const courses=data.courses.map(c=>`${c.name} (${[c.en?'English':'',c.es?'Español':''].filter(Boolean).join(' / ')})`).join('; ')||'No learning course assigned';
+ const driving=data.courses.some(c=>c.code==='DRV-B'), days=data.inactivity_days;
+ return `AL-NOOR Language Academy
+Your Journey Towards Success
+
+Dear ${name},
+Welcome to AL-NOOR! Your student account is ready.
+
+Your login details
+Student Portal: https://aapkaustaad.com/student-chat.html
+Learning & Exams: https://aapkaustaad.com/learning/
+Email: ${email}
+Password: 
+Courses: ${courses}
+Enrollment date: ${fmt(madridToday())}
+Access valid until: ${fmt(data.expires_on)}
+
+Your Road to Success
+Please take a moment to read the guidance below for a smooth, successful and timely learning journey, in English, Urdu and Spanish.
+
+English
+Study regularly, practise daily and make the most of your course access.${driving?' With consistent preparation, students can generally be ready for the driving theory exam in six weeks. Aim to pass within three months.':''}
+${days?`Important: Learning access is suspended after ${days} days of inactivity. Contact the academy for restoration.\n`:''}Change your password after your first login. We wish you every success!
+
+اردو
+باقاعدگی سے پڑھائی کریں اور روزانہ ٹیسٹ کی مشق کریں۔${driving?' مسلسل محنت سے عموماً چھ ہفتوں میں ڈرائیونگ تھیوری امتحان کی تیاری ہو سکتی ہے۔ کوشش کریں کہ تین ماہ میں امتحان پاس کر لیں۔':''}
+${days?`اہم: اگر آپ ${days} دن تک لرننگ پلیٹ فارم استعمال نہیں کریں گے تو آپ کی رسائی معطل ہو جائے گی۔ بحالی کے لیے اکیڈمی سے رابطہ کریں۔\n`:''}پہلی مرتبہ لاگ اِن کرنے کے بعد اپنا پاس ورڈ تبدیل کریں۔ اللہ تعالیٰ آپ کو کامیابی عطا فرمائے۔ آمین۔
+
+Español
+Estudia regularmente, practica todos los días y aprovecha al máximo tu curso.${driving?' Con preparación constante, generalmente puedes estar preparado/a para el examen teórico de conducir en seis semanas. Intenta aprobarlo en un plazo de tres meses.':''}
+${days?`Importante: El acceso a la plataforma de aprendizaje se suspende tras ${days} días de inactividad. Contacta con la academia para reactivarlo.\n`:''}Cambia tu contraseña después de iniciar sesión por primera vez. ¡Mucho éxito!
+
+Kind regards / نیک تمناؤں کے ساتھ / Un cordial saludo
+AL-NOOR Language Academy
+Aapka Ustaad
+https://aapkaustaad.com`;
+}
+const escapeHtml=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function formattedWelcome(text){
+ let rtl=false; const lines=text.split(/\r?\n/);const html=lines.map((line,i)=>{
+  const safe=escapeHtml(line); const trimmed=line.trim();
+  if(!trimmed)return '<div style="height:10px">&nbsp;</div>';
+  if(trimmed==='اردو')rtl=true;else if(trimmed==='English'||trimmed==='Español'||trimmed.startsWith('Kind regards'))rtl=false;
+  if(i===0&&trimmed==='AL-NOOR Language Academy')return `<div style="background:#103e75;color:#ffffff;font-size:26px;font-weight:bold;text-align:center;padding:18px 12px 4px">${safe}</div>`;
+  if(i===1&&trimmed==='Your Journey Towards Success')return `<div style="background:#103e75;color:#ffffff;font-size:17px;text-align:center;padding:4px 12px 18px;border-bottom:3px solid #e9be53">${safe}</div>`;
+  if(['Your login details','Your Road to Success','English','اردو','Español'].includes(trimmed))return `<div dir="${rtl?'rtl':'ltr'}" style="font-size:21px;font-weight:bold;color:#205ba5;border-bottom:2px solid #e9be53;margin:14px 0 9px;padding:6px 0">${safe}</div>`;
+  if(trimmed.startsWith('Access valid until:'))return `<div style="text-align:center;color:#b91c1c;font-weight:bold;font-size:24px;padding:14px 6px">${safe}</div>`;
+  const link=line.match(/^(Student Portal: |Learning & Exams: )?(https:\/\/aapkaustaad\.com(?:\/[a-zA-Z0-9._/-]*)?)$/);
+  if(link)return `<div style="margin:5px 0">${escapeHtml(link[1]||'')}<a style="color:#205ba5" href="${escapeHtml(link[2])}">${escapeHtml(link[2])}</a></div>`;
+  if(/^(Email|Password|Courses|Enrollment date):/.test(line)){const colon=line.indexOf(':')+1;return `<div style="margin:5px 0"><strong>${escapeHtml(line.slice(0,colon))}</strong>${line.slice(colon).trim()?escapeHtml(line.slice(colon)):'&nbsp;'}</div>`;}
+  if(/^(Important:|Importante:|اہم:)/.test(line))return `<div dir="${rtl?'rtl':'ltr'}" style="font-weight:bold;color:#b91c1c;margin:8px 0">${safe}</div>`;
+  if(trimmed==='AL-NOOR Language Academy'||trimmed==='Aapka Ustaad')return `<div style="color:#103e75;font-weight:bold;font-size:19px">${safe}</div>`;
+  return `<div dir="${rtl?'rtl':'ltr'}" style="text-align:${rtl?'right':'left'};margin:5px 0;white-space:pre-wrap">${safe}</div>`;
+ }).join('');return `<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.6;color:#17243a;max-width:760px">${html}</div>`;
 }
 export function gmailUrl(email,body){const url=new URL('https://mail.google.com/mail/');url.search=new URLSearchParams({view:'cm',fs:'1',to:email,su:'Welcome to AL-NOOR Language Academy | Student access',body}).toString();return url.href;}
 export function enrollmentTools({edge,status,element}){
@@ -20,6 +71,15 @@ export function enrollmentTools({edge,status,element}){
  $('enrollment-policy-save').onclick=async()=>{const btn=$('enrollment-policy-save');btn.disabled=true;try{const days=Number($('enrollment-days').value);if(!Number.isInteger(days)||days<1||days>365)throw Error('Choose 1–365 days.');await edge('learning',{action:'enrollment-settings-save',auto_block:$('enrollment-inactive').checked,expiry_enabled:$('enrollment-expiry').checked,inactivity_days:days});await load();status('Learning access policy saved. Existing inactivity suspensions require manual restoration.');}catch(e){status(e.message,true);}finally{btn.disabled=false;}};
  function values(){if(!ready)throw Error('Enrollment settings not loaded. Reload administration.');const d=$('enrollment-duration').value;const courses=[...list.querySelectorAll('[data-course]')].flatMap(x=>{const [selected,en,es]=[...x.querySelectorAll('input')].map(y=>y.checked);if(selected&&!en&&!es)throw Error('Select a language for every selected course.');return selected?[{course:x.dataset.course,en,es}]:[];});return {duration:d==='custom'?d:Number(d),expires_on:d==='custom'?$('enrollment-date').value:undefined,courses};}
  function reset(){ready=false;config=null;list.replaceChildren();$('enrollment-welcome').close();}
- function welcome({name,email,password,data,popup}){const dialog=$('enrollment-welcome'),body=welcomeMessage(name,email,data),url=gmailUrl(email,body);const link=$('enrollment-gmail');link.href=url;$('enrollment-message').value=body;$('enrollment-copy-password').onclick=async()=>{try{await navigator.clipboard.writeText(password);$('enrollment-copy-status').textContent='Password copied. Paste privately or into the Gmail draft if you choose.';}catch{$('enrollment-copy-status').textContent='Clipboard unavailable. Share the original password privately.';}};$('enrollment-copy-message').onclick=async()=>{try{await navigator.clipboard.writeText(body);$('enrollment-copy-status').textContent='Welcome message copied.';}catch{$('enrollment-message').select();}};$('enrollment-copy-status').textContent='No email sent. Review the recipient and message in Gmail.';dialog.onclose=()=>{password='';link.removeAttribute('href');$('enrollment-message').value='';$('enrollment-copy-password').onclick=null;$('enrollment-copy-message').onclick=null;};dialog.showModal();if(popup&&!popup.closed)try{popup.location.replace(url);}catch{} }
+ function welcome({name,email,password,data,popup}){
+  popup?.close();const dialog=$('enrollment-welcome'),editor=$('enrollment-message'),preview=$('enrollment-rich-preview'),link=$('enrollment-gmail'),feedback=$('enrollment-copy-status');
+  editor.value=welcomeMessage(name,email,data);link.href=gmailUrl(email,'');
+  const refresh=()=>{preview.innerHTML=formattedWelcome(editor.value);};editor.oninput=refresh;refresh();
+  $('enrollment-copy-password').onclick=async()=>{try{await navigator.clipboard.writeText(password);feedback.textContent='Password copied. Paste after Password: in Gmail or share privately.';}catch{feedback.textContent='Clipboard unavailable. Share the original password privately.';}};
+  $('enrollment-copy-message').onclick=async()=>{try{await navigator.clipboard.writeText(editor.value);feedback.textContent='Plain message copied. Paste in Gmail.';}catch{editor.select();feedback.textContent='Press Ctrl+C to copy the selected message.';}};
+  $('enrollment-copy-rich').onclick=async()=>{try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([formattedWelcome(editor.value)],{type:'text/html'}),'text/plain':new Blob([editor.value],{type:'text/plain'})})]);feedback.textContent='Formatted email copied. Open Gmail and paste into the empty body (Ctrl+V).';}catch{feedback.textContent='Rich clipboard unavailable. Select the formatted preview and copy it manually, or use Copy plain text.';}};
+  feedback.textContent='Edit any line, copy the formatted email, then open Gmail and paste. No email sent.';
+  dialog.onclose=()=>{password='';link.removeAttribute('href');editor.value='';preview.replaceChildren();editor.oninput=null;for(const id of ['enrollment-copy-password','enrollment-copy-message','enrollment-copy-rich'])$(id).onclick=null;};dialog.showModal();
+ }
  return {load,reset,values,welcome,update};
 }
