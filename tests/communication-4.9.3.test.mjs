@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const {gmailUrl,formatted,directory}=await import('data:text/javascript;base64,'+Buffer.from(readFileSync(new URL('../student-chat-communication.js',import.meta.url))).toString('base64'));
+test('single recipient uses To',()=>{const p=new URL(gmailUrl(['a@example.com'],'Hello')).searchParams;assert.equal(p.get('to'),'a@example.com');assert.equal(p.has('bcc'),false);});
+test('multiple use BCC only',()=>{const p=new URL(gmailUrl(['a@example.com','b@example.com'],'Hello & اردو')).searchParams;assert.equal(p.get('bcc'),'a@example.com,b@example.com');assert.equal(p.has('to'),false);assert.equal(p.get('su'),'Hello & اردو');assert.equal(p.has('body'),false);});
+test('duplicate addresses removed',()=>assert.equal(new URL(gmailUrl(['a@example.com','A@example.com'],'x')).searchParams.get('to'),'a@example.com'));
+test('invalid and empty addresses rejected',()=>{assert.throws(()=>gmailUrl([],'x'));assert.throws(()=>gmailUrl(['a@b.com,c@d.com'],'x'));});
+test('oversized URL rejected rather than silently dropping students',()=>assert.throws(()=>gmailUrl(Array.from({length:500},(_,i)=>`student${i}@example.com`),'x'),/smaller group/));
+test('escaped text, Urdu and footer',()=>{const html=formatted('<img src=x>','<script>bad</script>\nاردو');assert.ok(!html.includes('<script>'));assert.ok(html.includes('&lt;img'));assert.ok(html.includes('اردو'));assert.ok(html.includes('Learning &amp; Exams'));assert.ok(html.includes('dir="auto"'));});
+test('all pages, class memberships and revoked label data',async()=>{const calls=[];const rows=await directory(async(_,b)=>{calls.push(b.page);return {data:{accounts:[{id:String(b.page),role:'student',email:`s${b.page}@example.com`,display_name:'Student '+b.page,active:b.page===0}],memberships:[{user_id:String(b.page),class_id:'c'}],has_more:b.page===0}}},()=>true);assert.deepEqual(calls,[0,1]);assert.equal(rows.length,2);assert.deepEqual(rows[1].classes,['c']);assert.equal(rows[1].active,false);});
+test('denied role never calls directory',async()=>{let calls=0;await assert.rejects(directory(async()=>{calls++},()=>false));assert.equal(calls,0);});
+test('revoked during request discards response',async()=>{let ok=true;await assert.rejects(directory(async()=>{ok=false;return {data:{accounts:[],memberships:[]}}},()=>ok));});
+test('HTML and lifecycle hooks present',()=>{const html=readFileSync(new URL('../student-chat.html',import.meta.url),'utf8'),js=readFileSync(new URL('../student-chat.js',import.meta.url),'utf8');assert.equal((html.match(/id="sc-communication-open"/g)||[]).length,1);assert.match(html,/id="sc-communication-open" type="button" hidden/);assert.match(js,/signedOut\(\)\{communication\?\.reset\(\)/);assert.match(js,/profile=p;communication\?\.sync\(\)/);});
