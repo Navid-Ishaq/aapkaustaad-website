@@ -1,0 +1,7 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {saveNavigation,readNavigation,clearNavigation,KEY} from '../student-chat-navigation-restore.js';
+const store=()=>{const m=new Map();return {setItem:(k,v)=>m.set(k,v),getItem:k=>m.get(k),removeItem:k=>m.delete(k)}};
+test('navigation round trip and explicit allowlist',()=>{const s=store();saveNavigation(s,'u',{admin:true,classId:'c',scroll:900,studentPage:2,teacherPage:1,cleanup:true,password:'secret',email:'private',message:'private'});assert.deepEqual(readNavigation(s,'u'),{user:'u',admin:true,classId:'c',scroll:900,studentPage:2,teacherPage:1,cleanup:true});});
+test('different account clears state',()=>{const s=store();saveNavigation(s,'u',{});assert.equal(readNavigation(s,'v'),null);assert.equal(s.getItem(KEY),undefined)});
+test('logout clears state',()=>{const s=store();saveNavigation(s,'u',{});clearNavigation(s);assert.equal(readNavigation(s,'u'),null)});
+test('invalid numeric values bounded',()=>{const s=store();saveNavigation(s,'u',{scroll:-1,studentPage:Infinity,teacherPage:999999});const r=readNavigation(s,'u');assert.equal(r.scroll,0);assert.equal(r.studentPage,0);assert.equal(r.teacherPage,100000)});
+test('storage unavailable does not break page',()=>{const s={getItem(){throw Error()},setItem(){throw Error()},removeItem(){throw Error()}};saveNavigation(s,'u',{});assert.equal(readNavigation(s,'u'),null);clearNavigation(s)});

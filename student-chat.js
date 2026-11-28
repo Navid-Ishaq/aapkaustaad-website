@@ -1,3 +1,4 @@
+import {saveNavigation,readNavigation,clearNavigation} from './student-chat-navigation-restore.js?v=4.8.5';
 import {enrollmentTools} from './student-chat-enrollment.js?v=4.8.3';
 let enrollment;
 import {setupChatView} from './student-chat-view.js?v=3.2';
@@ -7,7 +8,7 @@ let linkPreviews;
 import { setupAdminNavigation } from './student-chat-navigation.js?v=3.2';
 import { createMediaTools } from './student-chat-media.js';
 let mediaTools;
-import { createAdminTools } from './student-chat-admin.js?v=4.8.1';
+import { createAdminTools } from './student-chat-admin.js?v=4.8.5';
 let adminTools;
 import { chatConfig } from './student-chat-config.js';
 const $=id=>document.getElementById(id);
@@ -19,7 +20,7 @@ const button=(text,fn,cls)=>{const b=element('button',text,cls);b.type='button';
 async function run(control,fn){if(control?.disabled)return;const feedback=control?.closest('#student-form')?$('enrollment-error'):null;if(feedback)feedback.textContent='';if(control)control.disabled=true;try{await fn();}catch(e){const message=e.message||'Operation failed. Please try again.';if(feedback)feedback.textContent=message;status(message,true);}finally{if(control)control.disabled=false;}}
 async function edge(name,body){const {data,error}=await db.functions.invoke(name,{body});if(error){let detail;try{detail=await error.context.json();}catch{}throw new Error(detail?.error||'Secure operation failed. Check your login or deployment.');}if(data?.error)throw new Error(data.error);return data;}
 async function clearChat(){linkPreviews?.clear();mediaTools?.clear();document.querySelector('.sc-layout').classList.remove('sc-chat-open');epoch++;current=null;replyTo=null;messages.clear();$('messages').replaceChildren();$('class-title').textContent='Choose a class';$('connection').textContent='';$('message-form').hidden=true;$('reply-preview').hidden=true;$('message-text').value='';$('message-text').style.height='44px';$('older').hidden=true;if(channel){const old=channel;channel=null;await db.removeChannel(old);}}
-async function signedOut(){adminTools?.reset();enrollment?.reset();profile=null;classes=[];await clearChat();$('class-list').replaceChildren();$('admin-classes').replaceChildren();$('admin-students').replaceChildren();$('student-classes').replaceChildren();$('workspace').hidden=true;$('admin-panel').hidden=true;$('password-panel').hidden=true;$('account-actions').hidden=true;$('login-panel').hidden=false;}
+async function signedOut(){clearNavigation(sessionStorage);adminTools?.reset();enrollment?.reset();profile=null;classes=[];await clearChat();$('class-list').replaceChildren();$('admin-classes').replaceChildren();$('admin-students').replaceChildren();$('student-classes').replaceChildren();$('workspace').hidden=true;$('admin-panel').hidden=true;$('password-panel').hidden=true;$('account-actions').hidden=true;$('login-panel').hidden=false;}
 async function loadAccount(){const {data:{user},error}=await db.auth.getUser();if(error||!user){await signedOut();status('Log in with your registered student or administrator account.');return;}
 profile=check(await db.from('chat_profiles').select('*').eq('id',user.id).single());if(!profile?.active){await db.auth.signOut();await signedOut();throw new Error('Your chat access is unavailable. Please contact your teacher.');}
 $('login-panel').hidden=true;$('account-actions').hidden=false;$('password-panel').hidden=true;$('first-password').hidden=false;$('password-toggle').hidden=false;
@@ -46,7 +47,27 @@ bindForm('student-form',async()=>{const class_ids=[...$('student-classes').query
 $('logout').onclick=()=>run($('logout'),async()=>{await clearChat();check(await db.auth.signOut());await signedOut();status('Logged out.');});$('password-toggle').onclick=()=>{$('password-panel').hidden=!$('password-panel').hidden;};$('admin-toggle').onclick=()=>{$('admin-panel').hidden=!$('admin-panel').hidden;};$('cancel-reply').onclick=()=>{replyTo=null;$('reply-preview').hidden=true;};$('older').onclick=()=>run($('older'),()=>history(true));
 db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')setTimeout(()=>run(null,signedOut),0);});
 setupAdminNavigation(()=>profile);setupChatView();
-await loadAccount();setInterval(async()=>{if(!profile||accessBusy)return;accessBusy=true;try{const p=check(await db.from('chat_profiles').select('*').eq('id',profile.id).single());if(!p?.active){await signedOut();await db.auth.signOut();status('Your access has been revoked. Please contact your teacher.',true);return;}profile=p;await loadClasses();}catch(e){if(e.code==='PGRST116'||e.status===401){await signedOut();await db.auth.signOut();status('Your account is unavailable. Please contact your teacher.',true);}else{await clearChat();status('Unable to verify access. Reconnect or log in again.',true);}}finally{accessBusy=false;}},15000);
+await loadAccount();
+if(profile){
+ const saved=readNavigation(sessionStorage,profile.id);
+ if(saved){
+  const c=classes.find(x=>x.id===saved.classId&&!x.archived);
+  if(c)await selectClass(c);
+  if(profile.role==='admin'&&saved.admin){
+   await adminTools?.restorePages(saved.studentPage,saved.teacherPage);
+   $('admin-panel').hidden=false;
+   if(!$('owner-panel').hidden)$('history-cleanup').open=saved.cleanup===true;
+  }
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  window.scrollTo({top:saved.scroll,behavior:'instant'});
+ }
+}
+window.addEventListener('pagehide',()=>{
+ if(!profile)return;
+ const pages=adminTools?.getPages()||{};
+ saveNavigation(sessionStorage,profile.id,{...pages,admin:profile.role==='admin'&&!$('admin-panel').hidden,classId:current?.id,scroll:window.scrollY,cleanup:$('history-cleanup').open});
+});
+setInterval(async()=>{if(!profile||accessBusy)return;accessBusy=true;try{const p=check(await db.from('chat_profiles').select('*').eq('id',profile.id).single());if(!p?.active){await signedOut();await db.auth.signOut();status('Your access has been revoked. Please contact your teacher.',true);return;}profile=p;await loadClasses();}catch(e){if(e.code==='PGRST116'||e.status===401){await signedOut();await db.auth.signOut();status('Your account is unavailable. Please contact your teacher.',true);}else{await clearChat();status('Unable to verify access. Reconnect or log in again.',true);}}finally{accessBusy=false;}},15000);
 window.addEventListener('chat:refresh-admin',()=>run(null,refreshAdmin));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&profile)run(null,loadAccount);});
 }catch(e){status('Student Chat could not load: '+(e.message||'Please try again later.'),true);}}
