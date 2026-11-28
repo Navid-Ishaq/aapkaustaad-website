@@ -104,7 +104,28 @@ window.addEventListener('error',function(event){
 #student-chat :is(.sc-heading,#admin-shortcuts) :is(a,button):focus-visible {outline:3px solid #e9c16b !important;outline-offset:2px;}
 @media(prefers-reduced-motion:reduce){#student-chat :is(.sc-heading,#admin-shortcuts) :is(a,button){transition:none !important;animation:none !important}}
 </style>
-</head>
+<style id="admin-polish-491">
+html body #student-chat.sc-signed-in .sc-heading h1,
+html body #student-chat:has(#account-actions:not([hidden])) .sc-heading h1,
+html body #student-chat .sc-heading h1 {
+ color:#fff !important;-webkit-text-fill-color:#fff !important;
+ font-size:clamp(18px,2vw,23px) !important;font-weight:750 !important;
+ text-shadow:0 1px 2px #0005;
+}
+html body #student-chat #student-form > button.sc-primary {
+ display:inline-flex !important;align-items:center;justify-content:center;
+ width:auto !important;min-width:0 !important;max-width:100% !important;
+ min-height:46px;padding:12px 24px !important;box-sizing:border-box;
+ border:1px solid #07594f !important;border-radius:10px !important;
+ background:linear-gradient(120deg,#126358,#087e70) !important;
+ color:#fff !important;font-weight:700 !important;white-space:normal;
+ box-shadow:inset 0 1px 0 #ffffff40,0 3px 8px #12635830 !important;
+ margin:16px 0 0 !important;cursor:pointer;
+}
+html body #student-chat #student-form > button.sc-primary:hover:not(:disabled) {background:linear-gradient(120deg,#0d5249,#09685e) !important;}
+html body #student-chat #student-form > button.sc-primary:focus-visible {outline:3px solid #2359aa;outline-offset:3px;}
+html body #student-chat #student-form > button.sc-primary:disabled {opacity:.6;cursor:wait;}
+</style></head>
 <body class="sc-page"><div class="site-spacer" aria-hidden="true"></div><nav class="detleng-nav"><div class="detleng-logo"><a href="index.html" aria-label="AL-NOOR home"><img src="logo.png" alt="AL-NOOR" width="174" height="58"></a></div><input type="checkbox" id="menu-toggle"><label for="menu-toggle" class="menu-icon" tabindex="0" aria-label="Toggle navigation">☰ MENU</label><div class="menu-links"><a href="index.html">Home</a><a href="about.html">About</a><a href="courses.html">Courses</a><a href="success.html">Success</a><a href="policies.html">Policies</a><a href="contact.html">Contact</a><a href="student-chat.html" aria-current="page">Student Chat</a><a href="inquiry.html" class="inquiry-nav-link">Enquire</a></div></nav>
 <div id="sc-navigation-loading" role="status" aria-live="polite"><div>Restoring your page…<span>AL-NOOR Student Chat</span></div></div>
 <main id="student-chat"><div class="sc-heading"><div><div class="sc-eyebrow">AL-NOOR · CLASSROOM COMMUNITY <span id="owner-badge" class="sc-owner-badge" hidden>Owner</span></div><h1>Student Chat</h1><p>Stay connected with your class and teachers.</p></div><div class="sc-heading-extras"><a class="sc-how-built-link" href="student-chat-how-to-build.html" aria-label="Read how AL-NOOR Student Chat was built"><span aria-hidden="true">✦</span> How to Build <span class="sc-link-arrow" aria-hidden="true">→</span></a><div id="account-actions" hidden><a class="sc-learning-link" href="learning/"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m2 10 10-5 10 5-10 5-10-5Zm4 2v5c3 3 9 3 12 0v-5m4-2v7"/></svg><span>Learning &amp; Exams<small>My courses · Practice · Exams</small></span><span aria-hidden="true">→</span></a> <button id="password-toggle">Change password</button> <button id="logout">Log out</button></div></div></div><nav id="admin-shortcuts" aria-label="Management shortcuts" hidden><a href="#class-groups">Class groups</a><a href="#create-student">Create student account</a><a href="#student-memberships">Student access & memberships</a><a href="#teacher-admins" data-owner-shortcut hidden>Teacher Admins</a><a href="#history-cleanup" data-owner-shortcut hidden>Class history cleanup</a></nav><p id="status" role="status" aria-live="polite">Loading secure login…</p><noscript>JavaScript is required to use Student Chat.</noscript>
