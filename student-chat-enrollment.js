@@ -1,3 +1,4 @@
+import {whatsappUrl,welcomeImage,downloadWelcomeImage} from './welcome-delivery.js?v=4.8.3';
 // Enrollment form and manual Gmail handoff. No credentials in URLs or persistent storage.
 export function madridToday(now=new Date()){
  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
@@ -78,8 +79,11 @@ export function enrollmentTools({edge,status,element}){
   $('enrollment-copy-password').onclick=async()=>{try{await navigator.clipboard.writeText(password);feedback.textContent='Password copied. Paste after Password: in Gmail or share privately.';}catch{feedback.textContent='Clipboard unavailable. Share the original password privately.';}};
   $('enrollment-copy-message').onclick=async()=>{try{await navigator.clipboard.writeText(editor.value);feedback.textContent='Plain message copied. Paste in Gmail.';}catch{editor.select();feedback.textContent='Press Ctrl+C to copy the selected message.';}};
   $('enrollment-copy-rich').onclick=async()=>{try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([formattedWelcome(editor.value)],{type:'text/html'}),'text/plain':new Blob([editor.value],{type:'text/plain'})})]);feedback.textContent='Formatted email copied. Open Gmail and paste into the empty body (Ctrl+V).';}catch{feedback.textContent='Rich clipboard unavailable. Select the formatted preview and copy it manually, or use Copy plain text.';}};
-  feedback.textContent='Edit any line, copy the formatted email, then open Gmail and paste. No email sent.';
-  dialog.onclose=()=>{password='';link.removeAttribute('href');editor.value='';preview.replaceChildren();editor.oninput=null;for(const id of ['enrollment-copy-password','enrollment-copy-message','enrollment-copy-rich'])$(id).onclick=null;};dialog.showModal();
+  const phone=$('enrollment-whatsapp-phone'),wa=$('enrollment-whatsapp'),image=$('enrollment-image');phone.value='';
+  wa.onclick=()=>{try{const url=whatsappUrl(phone.value,editor.value,password);window.open(url,'_blank','noopener,noreferrer');feedback.textContent='WhatsApp opened with the prepared message. Paste the password manually and review before sending.';}catch(e){feedback.textContent=e.message;phone.focus();}};
+  image.onclick=async()=>{image.disabled=true;try{const blob=await welcomeImage(editor.value,password);if(!dialog.open)return;downloadWelcomeImage(blob);feedback.textContent='Welcome PNG prepared. Attach it manually in WhatsApp. No password included.';}catch(e){feedback.textContent=e.message||'Image export failed.';}finally{image.disabled=false;}};
+  feedback.textContent='Edit any line, then choose Gmail or WhatsApp. No message sent.';
+  dialog.onclose=()=>{password='';link.removeAttribute('href');editor.value='';preview.replaceChildren();editor.oninput=null;phone.value='';for(const id of ['enrollment-copy-password','enrollment-copy-message','enrollment-copy-rich','enrollment-whatsapp','enrollment-image'])$(id).onclick=null;};dialog.showModal();
  }
  return {load,reset,values,welcome,update};
 }

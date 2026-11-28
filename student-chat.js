@@ -1,4 +1,4 @@
-import {enrollmentTools} from './student-chat-enrollment.js?v=4.8.2';
+import {enrollmentTools} from './student-chat-enrollment.js?v=4.8.3';
 let enrollment;
 import {setupChatView} from './student-chat-view.js?v=3.2';
 import { setupComposer, firstLink } from './student-chat-composer.js';
